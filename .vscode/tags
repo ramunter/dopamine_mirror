@@ -1,0 +1,546 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ACROBOT_MAX_VALS	../dopamine/discrete_domains/gym_lib.py	/^ACROBOT_MAX_VALS = np.array([1., 1., 1., 1., 5., 5.])$/;"	kind:variable	line:43
+ACROBOT_MIN_VALS	../dopamine/discrete_domains/gym_lib.py	/^ACROBOT_MIN_VALS = np.array([-1., -1., -1., -1., -5., -5.])$/;"	kind:variable	line:42
+ALL_GAMES	../dopamine/colab/utils.py	/^ALL_GAMES = ['AirRaid', 'Alien', 'Amidar', 'Assault', 'Asterix', 'Asteroids',$/;"	kind:variable	line:35
+AtariInitTest	../tests/dopamine/atari_init_test.py	/^class AtariInitTest(tf.test.TestCase):$/;"	kind:class	line:31
+AtariIntegrationTest	../tests/dopamine/tests/integration_test.py	/^class AtariIntegrationTest(tf.test.TestCase):$/;"	kind:class	line:33
+AtariLibTest	../tests/dopamine/discrete_domains/atari_lib_test.py	/^class AtariLibTest(tf.test.TestCase):$/;"	kind:class	line:34
+AtariPreprocessing	../dopamine/discrete_domains/atari_lib.py	/^class AtariPreprocessing(object):$/;"	kind:class	line:207
+AtariPreprocessingTest	../tests/dopamine/discrete_domains/atari_lib_test.py	/^class AtariPreprocessingTest(tf.test.TestCase):$/;"	kind:class	line:106
+BATCH_SIZE	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^BATCH_SIZE = 32$/;"	kind:variable	line:38
+BATCH_SIZE	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^BATCH_SIZE = 32$/;"	kind:variable	line:30
+CARTPOLE_MAX_VALS	../dopamine/discrete_domains/gym_lib.py	/^CARTPOLE_MAX_VALS = np.array([2.4, 5., math.pi\/12., math.pi*2.])$/;"	kind:variable	line:41
+CARTPOLE_MIN_VALS	../dopamine/discrete_domains/gym_lib.py	/^CARTPOLE_MIN_VALS = np.array([-2.4, -5., -math.pi\/12., -math.pi*2.])$/;"	kind:variable	line:40
+CHECKPOINT_DURATION	../dopamine/discrete_domains/checkpointer.py	/^CHECKPOINT_DURATION = 4$/;"	kind:variable	line:54
+CHECKPOINT_DURATION	../dopamine/discrete_domains/logger.py	/^CHECKPOINT_DURATION = 4$/;"	kind:variable	line:26
+CHECKPOINT_DURATION	../dopamine/replay_memory/circular_replay_buffer.py	/^CHECKPOINT_DURATION = 4$/;"	kind:variable	line:50
+CheckpointableClass	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^class CheckpointableClass(object):$/;"	kind:class	line:41
+Checkpointer	../dopamine/discrete_domains/checkpointer.py	/^class Checkpointer(object):$/;"	kind:class	line:80
+CheckpointerTest	../tests/dopamine/discrete_domains/checkpointer_test.py	/^class CheckpointerTest(tf.test.TestCase):$/;"	kind:class	line:33
+DQNAgent	../dopamine/agents/dqn/dqn_agent.py	/^class DQNAgent(object):$/;"	kind:class	line:113
+DQNAgentTest	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^class DQNAgentTest(tf.test.TestCase):$/;"	kind:class	line:37
+FILE_PREFIX	../dopamine/colab/utils.py	/^FILE_PREFIX = 'log'$/;"	kind:variable	line:32
+FLAGS	../dopamine/discrete_domains/train.py	/^FLAGS = flags.FLAGS$/;"	kind:variable	line:44
+FLAGS	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^FLAGS = flags.FLAGS$/;"	kind:variable	line:34
+FLAGS	../tests/dopamine/atari_init_test.py	/^FLAGS = flags.FLAGS$/;"	kind:variable	line:28
+FLAGS	../tests/dopamine/discrete_domains/atari_lib_test.py	/^FLAGS = flags.FLAGS$/;"	kind:variable	line:31
+FLAGS	../tests/dopamine/discrete_domains/checkpointer_test.py	/^FLAGS = flags.FLAGS$/;"	kind:variable	line:30
+FLAGS	../tests/dopamine/discrete_domains/logger_test.py	/^FLAGS = flags.FLAGS$/;"	kind:variable	line:30
+FLAGS	../tests/dopamine/discrete_domains/run_experiment_test.py	/^FLAGS = flags.FLAGS$/;"	kind:variable	line:38
+FLAGS	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^FLAGS = flags.FLAGS$/;"	kind:variable	line:32
+FLAGS	../tests/dopamine/tests/gin_config_test.py	/^FLAGS = flags.FLAGS$/;"	kind:variable	line:30
+FLAGS	../tests/dopamine/tests/integration_test.py	/^FLAGS = flags.FLAGS$/;"	kind:variable	line:30
+FLAGS	../tests/dopamine/tests/train_runner_integration_test.py	/^FLAGS = flags.FLAGS$/;"	kind:variable	line:28
+FourierBasis	../dopamine/discrete_domains/gym_lib.py	/^class FourierBasis(object):$/;"	kind:class	line:127
+GaussianRegression2	../dopamine/agents/dqn/dqn_agent.py	/^class GaussianRegression2():$/;"	kind:class	line:75
+GinConfigTest	../tests/dopamine/tests/gin_config_test.py	/^class GinConfigTest(tf.test.TestCase):$/;"	kind:class	line:33
+GymPreprocessing	../dopamine/discrete_domains/gym_lib.py	/^class GymPreprocessing(object):$/;"	kind:class	line:306
+GymPreprocessingTest	../tests/dopamine/discrete_domains/gym_lib_test.py	/^class GymPreprocessingTest(tf.test.TestCase):$/;"	kind:class	line:43
+ITERATION_PREFIX	../dopamine/colab/utils.py	/^ITERATION_PREFIX = 'iteration_'$/;"	kind:variable	line:33
+ImplicitQuantileAgent	../dopamine/agents/implicit_quantile/implicit_quantile_agent.py	/^class ImplicitQuantileAgent(rainbow_agent.RainbowAgent):$/;"	kind:class	line:39
+ImplicitQuantileAgentTest	../tests/dopamine/agents/implicit_quantile/implicit_quantile_agent_test.py	/^class ImplicitQuantileAgentTest(tf.test.TestCase):$/;"	kind:class	line:32
+IterationStatistics	../dopamine/discrete_domains/iteration_statistics.py	/^class IterationStatistics(object):$/;"	kind:class	line:23
+IterationStatisticsTest	../tests/dopamine/discrete_domains/iteration_statistics_test.py	/^class IterationStatisticsTest(tf.test.TestCase):$/;"	kind:class	line:27
+Logger	../dopamine/discrete_domains/logger.py	/^class Logger(object):$/;"	kind:class	line:29
+LoggerTest	../tests/dopamine/discrete_domains/logger_test.py	/^class LoggerTest(tf.test.TestCase):$/;"	kind:class	line:33
+MAX_SAMPLE_ATTEMPTS	../dopamine/replay_memory/circular_replay_buffer.py	/^MAX_SAMPLE_ATTEMPTS = 1000$/;"	kind:variable	line:51
+MockALE	../tests/dopamine/discrete_domains/atari_lib_test.py	/^class MockALE(object):$/;"	kind:class	line:61
+MockDQNAgent	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^    class MockDQNAgent(dqn_agent.DQNAgent):$/;"	kind:class	line:58
+MockEnvironment	../tests/dopamine/discrete_domains/atari_lib_test.py	/^class MockEnvironment(object):$/;"	kind:class	line:74
+MockEnvironment	../tests/dopamine/discrete_domains/run_experiment_test.py	/^class MockEnvironment(object):$/;"	kind:class	line:49
+MockGymEnv	../tests/dopamine/discrete_domains/atari_lib_test.py	/^    class MockGymEnv(object):$/;"	kind:class	line:44
+MockGymEnvironment	../tests/dopamine/discrete_domains/gym_lib_test.py	/^class MockGymEnvironment(object):$/;"	kind:class	line:27
+MockImplicitQuantileAgent	../tests/dopamine/agents/implicit_quantile/implicit_quantile_agent_test.py	/^        implicit_quantile_agent.ImplicitQuantileAgent):$/;"	kind:class	line:45
+MockLogger	../tests/dopamine/discrete_domains/run_experiment_test.py	/^class MockLogger(object):$/;"	kind:class	line:75
+MockRainbowAgent	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^    class MockRainbowAgent(rainbow_agent.RainbowAgent):$/;"	kind:class	line:307
+MockReplayBuffer	../dopamine/utils/test_utils.py	/^class MockReplayBuffer(object):$/;"	kind:class	line:27
+NATURE_DQN_DTYPE	../dopamine/agents/dqn/dqn_agent.py	/^NATURE_DQN_DTYPE = atari_lib.NATURE_DQN_DTYPE$/;"	kind:variable	line:39
+NATURE_DQN_DTYPE	../dopamine/discrete_domains/atari_lib.py	/^NATURE_DQN_DTYPE = tf.uint8  # DType of Atari 2600 observations.$/;"	kind:variable	line:44
+NATURE_DQN_OBSERVATION_SHAPE	../dopamine/agents/dqn/dqn_agent.py	/^NATURE_DQN_OBSERVATION_SHAPE = atari_lib.NATURE_DQN_OBSERVATION_SHAPE$/;"	kind:variable	line:38
+NATURE_DQN_OBSERVATION_SHAPE	../dopamine/discrete_domains/atari_lib.py	/^NATURE_DQN_OBSERVATION_SHAPE = (84, 84)  # Size of downscaled Atari 2600 frame.$/;"	kind:variable	line:43
+NATURE_DQN_STACK_SIZE	../dopamine/agents/dqn/dqn_agent.py	/^NATURE_DQN_STACK_SIZE = atari_lib.NATURE_DQN_STACK_SIZE$/;"	kind:variable	line:40
+NATURE_DQN_STACK_SIZE	../dopamine/discrete_domains/atari_lib.py	/^NATURE_DQN_STACK_SIZE = 4  # Number of frames in the state stack.$/;"	kind:variable	line:45
+OBSERVATION_SHAPE	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^OBSERVATION_SHAPE = (84, 84)$/;"	kind:variable	line:35
+OBS_DTYPE	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^OBS_DTYPE = np.uint8$/;"	kind:variable	line:36
+OutOfGraphPrioritizedReplayBuffer	../dopamine/replay_memory/prioritized_replay_buffer.py	/^    circular_replay_buffer.OutOfGraphReplayBuffer):$/;"	kind:class	line:37
+OutOfGraphPrioritizedReplayBufferTest	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^class OutOfGraphPrioritizedReplayBufferTest(tf.test.TestCase):$/;"	kind:class	line:34
+OutOfGraphReplayBuffer	../dopamine/replay_memory/circular_replay_buffer.py	/^class OutOfGraphReplayBuffer(object):$/;"	kind:class	line:81
+OutOfGraphReplayBufferTest	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^class OutOfGraphReplayBufferTest(tf.test.TestCase):$/;"	kind:class	line:47
+ProjectDistributionTest	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^class ProjectDistributionTest(tf.test.TestCase):$/;"	kind:class	line:33
+REPLAY_CAPACITY	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^REPLAY_CAPACITY = 100$/;"	kind:variable	line:31
+RainbowAgent	../dopamine/agents/rainbow/rainbow_agent.py	/^class RainbowAgent(dqn_agent.DQNAgent):$/;"	kind:class	line:55
+RainbowAgentTest	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^class RainbowAgentTest(tf.test.TestCase):$/;"	kind:class	line:290
+ReplayElement	../dopamine/replay_memory/circular_replay_buffer.py	/^ReplayElement = ($/;"	kind:variable	line:43
+RunExperimentTest	../tests/dopamine/discrete_domains/run_experiment_test.py	/^class RunExperimentTest(tf.test.TestCase):$/;"	kind:class	line:101
+Runner	../dopamine/discrete_domains/run_experiment.py	/^class Runner(object):$/;"	kind:class	line:118
+RunnerTest	../tests/dopamine/discrete_domains/run_experiment_test.py	/^class RunnerTest(tf.test.TestCase):$/;"	kind:class	line:184
+SCREEN_SIZE	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^SCREEN_SIZE = (84, 84)$/;"	kind:variable	line:28
+STACK_SIZE	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^STACK_SIZE = 4$/;"	kind:variable	line:37
+STACK_SIZE	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^STACK_SIZE = 4$/;"	kind:variable	line:29
+STORE_FILENAME_PREFIX	../dopamine/replay_memory/circular_replay_buffer.py	/^STORE_FILENAME_PREFIX = '$store$_'$/;"	kind:variable	line:47
+SumTree	../dopamine/replay_memory/sum_tree.py	/^class SumTree(object):$/;"	kind:class	line:30
+SumTreeTest	../tests/dopamine/replay_memory/sum_tree_test.py	/^class SumTreeTest(tf.test.TestCase):$/;"	kind:class	line:28
+TrainRunner	../dopamine/discrete_domains/run_experiment.py	/^class TrainRunner(Runner):$/;"	kind:class	line:483
+TrainRunnerIntegrationTest	../tests/dopamine/tests/train_runner_integration_test.py	/^class TrainRunnerIntegrationTest(tf.test.TestCase):$/;"	kind:class	line:31
+WrappedPrioritizedReplayBuffer	../dopamine/replay_memory/prioritized_replay_buffer.py	/^    circular_replay_buffer.WrappedReplayBuffer):$/;"	kind:class	line:254
+WrappedPrioritizedReplayBufferTest	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^class WrappedPrioritizedReplayBufferTest(tf.test.TestCase):$/;"	kind:class	line:146
+WrappedReplayBuffer	../dopamine/replay_memory/circular_replay_buffer.py	/^class WrappedReplayBuffer(object):$/;"	kind:class	line:666
+WrappedReplayBufferTest	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^class WrappedReplayBufferTest(tf.test.TestCase):$/;"	kind:class	line:642
+__init__	../dopamine/agents/dqn/dqn_agent.py	/^    def __init__(self, dim=3):$/;"	kind:member	line:76
+__init__	../dopamine/agents/dqn/dqn_agent.py	/^    def __init__(self,$/;"	kind:member	line:116
+__init__	../dopamine/agents/implicit_quantile/implicit_quantile_agent.py	/^  def __init__(self,$/;"	kind:member	line:42
+__init__	../dopamine/agents/rainbow/rainbow_agent.py	/^  def __init__(self,$/;"	kind:member	line:58
+__init__	../dopamine/discrete_domains/atari_lib.py	/^  def __init__(self, environment, frame_skip=4, terminal_on_life_loss=False,$/;"	kind:member	line:223
+__init__	../dopamine/discrete_domains/checkpointer.py	/^  def __init__(self, base_directory, checkpoint_file_prefix='ckpt',$/;"	kind:member	line:84
+__init__	../dopamine/discrete_domains/gym_lib.py	/^  def __init__(self, environment):$/;"	kind:member	line:309
+__init__	../dopamine/discrete_domains/gym_lib.py	/^  def __init__(self, nvars, min_vals=0, max_vals=None, order=3):$/;"	kind:member	line:141
+__init__	../dopamine/discrete_domains/iteration_statistics.py	/^  def __init__(self):$/;"	kind:member	line:37
+__init__	../dopamine/discrete_domains/logger.py	/^  def __init__(self, logging_dir):$/;"	kind:member	line:32
+__init__	../dopamine/discrete_domains/run_experiment.py	/^  def __init__(self, base_dir, create_agent_fn,$/;"	kind:member	line:491
+__init__	../dopamine/discrete_domains/run_experiment.py	/^  def __init__(self,$/;"	kind:member	line:137
+__init__	../dopamine/replay_memory/circular_replay_buffer.py	/^  def __init__(self,$/;"	kind:member	line:678
+__init__	../dopamine/replay_memory/circular_replay_buffer.py	/^  def __init__(self,$/;"	kind:member	line:99
+__init__	../dopamine/replay_memory/prioritized_replay_buffer.py	/^  def __init__(self,$/;"	kind:member	line:266
+__init__	../dopamine/replay_memory/prioritized_replay_buffer.py	/^  def __init__(self,$/;"	kind:member	line:43
+__init__	../dopamine/replay_memory/sum_tree.py	/^  def __init__(self, capacity):$/;"	kind:member	line:65
+__init__	../dopamine/utils/test_utils.py	/^  def __init__(self):$/;"	kind:member	line:30
+__init__	../tests/dopamine/discrete_domains/atari_lib_test.py	/^      def __init__(self, env_name):$/;"	kind:member	line:46
+__init__	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def __init__(self):$/;"	kind:member	line:64
+__init__	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def __init__(self, screen_size=10, max_steps=10):$/;"	kind:member	line:77
+__init__	../tests/dopamine/discrete_domains/gym_lib_test.py	/^  def __init__(self):$/;"	kind:member	line:30
+__init__	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def __init__(self, max_steps=10):$/;"	kind:member	line:52
+__init__	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def __init__(self, test_cls=None, run_asserts=True, data=None):$/;"	kind:member	line:78
+__init__	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def __init__(self):$/;"	kind:member	line:43
+__init__.py	../dopamine/__init__.py	1;"	kind:file	line:1
+__init__.py	../dopamine/agents/__init__.py	1;"	kind:file	line:1
+__init__.py	../dopamine/agents/dqn/__init__.py	1;"	kind:file	line:1
+__init__.py	../dopamine/agents/implicit_quantile/__init__.py	1;"	kind:file	line:1
+__init__.py	../dopamine/agents/rainbow/__init__.py	1;"	kind:file	line:1
+__init__.py	../dopamine/colab/__init__.py	1;"	kind:file	line:1
+__init__.py	../dopamine/discrete_domains/__init__.py	1;"	kind:file	line:1
+__init__.py	../dopamine/replay_memory/__init__.py	1;"	kind:file	line:1
+__init__.py	../dopamine/utils/__init__.py	1;"	kind:file	line:1
+__setitem__	../dopamine/discrete_domains/logger.py	/^  def __setitem__(self, key, value):$/;"	kind:member	line:60
+__setitem__	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def __setitem__(self, key, val):$/;"	kind:member	line:86
+_add	../dopamine/replay_memory/circular_replay_buffer.py	/^  def _add(self, *args):$/;"	kind:member	line:258
+_add	../dopamine/replay_memory/prioritized_replay_buffer.py	/^  def _add(self, *args):$/;"	kind:member	line:113
+_add_zero_transition	../dopamine/replay_memory/circular_replay_buffer.py	/^  def _add_zero_transition(self):$/;"	kind:member	line:221
+_agent_step	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def _agent_step(self, reward, observation):$/;"	kind:member	line:186
+_basic_discrete_domain_network	../dopamine/discrete_domains/gym_lib.py	/^def _basic_discrete_domain_network(min_vals, max_vals, num_actions, state,$/;"	kind:function	line:77
+_build_networks	../dopamine/agents/dqn/dqn_agent.py	/^    def _build_networks(self):$/;"	kind:member	line:262
+_build_networks	../dopamine/agents/implicit_quantile/implicit_quantile_agent.py	/^  def _build_networks(self):$/;"	kind:member	line:125
+_build_replay_buffer	../dopamine/agents/dqn/dqn_agent.py	/^    def _build_replay_buffer(self, use_staging):$/;"	kind:member	line:291
+_build_replay_buffer	../dopamine/agents/rainbow/rainbow_agent.py	/^  def _build_replay_buffer(self, use_staging):$/;"	kind:member	line:177
+_build_sync_op	../dopamine/agents/dqn/dqn_agent.py	/^    def _build_sync_op(self):$/;"	kind:member	line:349
+_build_target_distribution	../dopamine/agents/rainbow/rainbow_agent.py	/^  def _build_target_distribution(self):$/;"	kind:member	line:199
+_build_target_q_op	../dopamine/agents/dqn/dqn_agent.py	/^    def _build_target_q_op(self):$/;"	kind:member	line:309
+_build_target_quantile_values_op	../dopamine/agents/implicit_quantile/implicit_quantile_agent.py	/^  def _build_target_quantile_values_op(self):$/;"	kind:member	line:192
+_build_train_op	../dopamine/agents/dqn/dqn_agent.py	/^    def _build_train_op(self):$/;"	kind:member	line:328
+_build_train_op	../dopamine/agents/implicit_quantile/implicit_quantile_agent.py	/^  def _build_train_op(self):$/;"	kind:member	line:232
+_build_train_op	../dopamine/agents/rainbow/rainbow_agent.py	/^  def _build_train_op(self):$/;"	kind:member	line:252
+_check_add_types	../dopamine/replay_memory/circular_replay_buffer.py	/^  def _check_add_types(self, *args):$/;"	kind:member	line:275
+_checkpoint_experiment	../dopamine/discrete_domains/run_experiment.py	/^  def _checkpoint_experiment(self, iteration):$/;"	kind:member	line:455
+_clean_up_old_checkpoints	../dopamine/discrete_domains/checkpointer.py	/^  def _clean_up_old_checkpoints(self, iteration_number):$/;"	kind:member	line:139
+_create_batch_arrays	../dopamine/replay_memory/circular_replay_buffer.py	/^  def _create_batch_arrays(self, batch_size):$/;"	kind:member	line:391
+_create_directories	../dopamine/discrete_domains/run_experiment.py	/^  def _create_directories(self):$/;"	kind:member	line:196
+_create_mock_checkpointer	../tests/dopamine/discrete_domains/run_experiment_test.py	/^def _create_mock_checkpointer():$/;"	kind:function	line:41
+_create_storage	../dopamine/replay_memory/circular_replay_buffer.py	/^  def _create_storage(self):$/;"	kind:member	line:181
+_create_test_agent	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def _create_test_agent(self, sess):$/;"	kind:member	line:55
+_create_test_agent	../tests/dopamine/agents/implicit_quantile/implicit_quantile_agent_test.py	/^  def _create_test_agent(self, sess):$/;"	kind:member	line:42
+_create_test_agent	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def _create_test_agent(self, sess):$/;"	kind:member	line:304
+_end_episode	../dopamine/discrete_domains/run_experiment.py	/^  def _end_episode(self, reward):$/;"	kind:member	line:263
+_fetch_grayscale_observation	../dopamine/discrete_domains/atari_lib.py	/^  def _fetch_grayscale_observation(self, output):$/;"	kind:member	line:358
+_generate_filename	../dopamine/discrete_domains/checkpointer.py	/^  def _generate_filename(self, file_prefix, iteration_number):$/;"	kind:member	line:108
+_generate_filename	../dopamine/discrete_domains/logger.py	/^  def _generate_filename(self, filename_prefix, iteration_number):$/;"	kind:member	line:72
+_generate_filename	../dopamine/replay_memory/circular_replay_buffer.py	/^  def _generate_filename(self, checkpoint_dir, name, suffix):$/;"	kind:member	line:567
+_get_element_stack	../dopamine/replay_memory/circular_replay_buffer.py	/^  def _get_element_stack(self, index, element_name):$/;"	kind:member	line:346
+_get_network_type	../dopamine/agents/dqn/dqn_agent.py	/^    def _get_network_type(self):$/;"	kind:member	line:243
+_get_network_type	../dopamine/agents/implicit_quantile/implicit_quantile_agent.py	/^  def _get_network_type(self):$/;"	kind:member	line:101
+_get_network_type	../dopamine/agents/rainbow/rainbow_agent.py	/^  def _get_network_type(self):$/;"	kind:member	line:156
+_initialize_checkpointer_and_maybe_resume	../dopamine/discrete_domains/run_experiment.py	/^  def _initialize_checkpointer_and_maybe_resume(self, checkpoint_file_prefix):$/;"	kind:member	line:201
+_initialize_episode	../dopamine/discrete_domains/run_experiment.py	/^  def _initialize_episode(self):$/;"	kind:member	line:241
+_load_data_from_file	../dopamine/discrete_domains/checkpointer.py	/^  def _load_data_from_file(self, filename):$/;"	kind:member	line:159
+_log_experiment	../dopamine/discrete_domains/run_experiment.py	/^  def _log_experiment(self, iteration, statistics):$/;"	kind:member	line:444
+_network_template	../dopamine/agents/dqn/dqn_agent.py	/^    def _network_template(self, state):$/;"	kind:member	line:251
+_network_template	../dopamine/agents/implicit_quantile/implicit_quantile_agent.py	/^  def _network_template(self, state, num_quantiles):$/;"	kind:member	line:110
+_network_template	../dopamine/agents/rainbow/rainbow_agent.py	/^  def _network_template(self, state):$/;"	kind:member	line:165
+_network_template	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^      def _network_template(self, state):$/;"	kind:member	line:60
+_network_template	../tests/dopamine/agents/implicit_quantile/implicit_quantile_agent_test.py	/^      def _network_template(self, state, num_quantiles):$/;"	kind:member	line:47
+_network_template	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^      def _network_template(self, state):$/;"	kind:member	line:309
+_pool_and_resize	../dopamine/discrete_domains/atari_lib.py	/^  def _pool_and_resize(self):$/;"	kind:member	line:372
+_record_observation	../dopamine/agents/dqn/dqn_agent.py	/^    def _record_observation(self, observation):$/;"	kind:member	line:472
+_reset_state	../dopamine/agents/dqn/dqn_agent.py	/^    def _reset_state(self):$/;"	kind:member	line:506
+_return_checkpointable_elements	../dopamine/replay_memory/circular_replay_buffer.py	/^  def _return_checkpointable_elements(self):$/;"	kind:member	line:570
+_run_eval_phase	../dopamine/discrete_domains/run_experiment.py	/^  def _run_eval_phase(self, statistics):$/;"	kind:member	line:371
+_run_one_episode	../dopamine/discrete_domains/run_experiment.py	/^  def _run_one_episode(self):$/;"	kind:member	line:271
+_run_one_iteration	../dopamine/discrete_domains/run_experiment.py	/^  def _run_one_iteration(self, iteration):$/;"	kind:member	line:392
+_run_one_iteration	../dopamine/discrete_domains/run_experiment.py	/^  def _run_one_iteration(self, iteration):$/;"	kind:member	line:507
+_run_one_phase	../dopamine/discrete_domains/run_experiment.py	/^  def _run_one_phase(self, min_steps, statistics, run_mode_str):$/;"	kind:member	line:309
+_run_one_step	../dopamine/discrete_domains/run_experiment.py	/^  def _run_one_step(self, action):$/;"	kind:member	line:250
+_run_train_phase	../dopamine/discrete_domains/run_experiment.py	/^  def _run_train_phase(self, statistics):$/;"	kind:member	line:346
+_save_data_to_file	../dopamine/discrete_domains/checkpointer.py	/^  def _save_data_to_file(self, data, filename):$/;"	kind:member	line:113
+_save_tensorboard_summaries	../dopamine/discrete_domains/run_experiment.py	/^  def _save_tensorboard_summaries(self, iteration, num_episodes,$/;"	kind:member	line:529
+_save_tensorboard_summaries	../dopamine/discrete_domains/run_experiment.py	/^  def _save_tensorboard_summaries(self, iteration,$/;"	kind:member	line:418
+_select_action	../dopamine/agents/dqn/dqn_agent.py	/^    def _select_action(self):$/;"	kind:member	line:421
+_set_transition_shape	../dopamine/replay_memory/circular_replay_buffer.py	/^  def _set_transition_shape(self, transition, transition_type):$/;"	kind:member	line:799
+_set_up_staging	../dopamine/replay_memory/circular_replay_buffer.py	/^  def _set_up_staging(self, transition):$/;"	kind:member	line:810
+_store_transition	../dopamine/agents/dqn/dqn_agent.py	/^    def _store_transition(self, last_observation, action, reward, is_terminal):$/;"	kind:member	line:488
+_store_transition	../dopamine/agents/rainbow/rainbow_agent.py	/^  def _store_transition(self,$/;"	kind:member	line:305
+_testCustomShapes	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def _testCustomShapes(self, shape, dtype, stack_size):$/;"	kind:member	line:232
+_total_priority	../dopamine/replay_memory/sum_tree.py	/^  def _total_priority(self):$/;"	kind:member	line:91
+_train_step	../dopamine/agents/dqn/dqn_agent.py	/^    def _train_step(self):$/;"	kind:member	line:445
+_verify_sampled_trajectories	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def _verify_sampled_trajectories(self, batch):$/;"	kind:member	line:693
+acrobot_dqn_network	../dopamine/discrete_domains/gym_lib.py	/^def acrobot_dqn_network(num_actions, network_type, state):$/;"	kind:function	line:244
+acrobot_fourier_dqn_network	../dopamine/discrete_domains/gym_lib.py	/^def acrobot_fourier_dqn_network(num_actions, network_type, state):$/;"	kind:function	line:263
+acrobot_rainbow_network	../dopamine/discrete_domains/gym_lib.py	/^def acrobot_rainbow_network(num_actions, num_atoms, support, network_type,$/;"	kind:function	line:282
+action_space	../dopamine/discrete_domains/atari_lib.py	/^  def action_space(self):$/;"	kind:member	line:268
+action_space	../dopamine/discrete_domains/gym_lib.py	/^  def action_space(self):$/;"	kind:member	line:318
+add	../dopamine/replay_memory/circular_replay_buffer.py	/^  def add(self, observation, action, reward, terminal, *args):$/;"	kind:member	line:230
+add	../dopamine/replay_memory/circular_replay_buffer.py	/^  def add(self, observation, action, reward, terminal, *args):$/;"	kind:member	line:756
+add_blank	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def add_blank(self, memory, action=0, reward=0.0, terminal=0, priority=1.0):$/;"	kind:member	line:44
+add_blank	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def add_blank(self, replay):$/;"	kind:member	line:159
+append	../dopamine/discrete_domains/iteration_statistics.py	/^  def append(self, data_pairs):$/;"	kind:member	line:40
+atari_init_test.py	../tests/dopamine/atari_init_test.py	1;"	kind:file	line:1
+atari_lib.py	../dopamine/discrete_domains/atari_lib.py	1;"	kind:file	line:1
+atari_lib_test.py	../tests/dopamine/discrete_domains/atari_lib_test.py	1;"	kind:file	line:1
+author	../setup.py	/^    author='The Dopamine Team',  # Optional$/;"	kind:variable	line:55
+author_email	../setup.py	/^    author_email='opensource@google.com',$/;"	kind:variable	line:56
+begin_episode	../dopamine/agents/dqn/dqn_agent.py	/^    def begin_episode(self, observation):$/;"	kind:member	line:366
+bundle_and_checkpoint	../dopamine/agents/dqn/dqn_agent.py	/^    def bundle_and_checkpoint(self, checkpoint_dir, iteration_number):$/;"	kind:member	line:510
+bundle_and_checkpoint	../tests/dopamine/discrete_domains/run_experiment_test.py	/^    def bundle_and_checkpoint(x, y):$/;"	kind:function	line:359
+bundle_and_checkpoint	../tests/dopamine/discrete_domains/run_experiment_test.py	/^    def bundle_and_checkpoint(x, y):$/;"	kind:function	line:414
+cartpole_dqn_network	../dopamine/discrete_domains/gym_lib.py	/^def cartpole_dqn_network(num_actions, network_type, state):$/;"	kind:function	line:109
+cartpole_fourier_dqn_network	../dopamine/discrete_domains/gym_lib.py	/^def cartpole_fourier_dqn_network(num_actions, network_type, state):$/;"	kind:function	line:201
+cartpole_rainbow_network	../dopamine/discrete_domains/gym_lib.py	/^def cartpole_rainbow_network(num_actions, num_atoms, support, network_type,$/;"	kind:function	line:220
+checkpointer.py	../dopamine/discrete_domains/checkpointer.py	1;"	kind:file	line:1
+checkpointer_test.py	../tests/dopamine/discrete_domains/checkpointer_test.py	1;"	kind:file	line:1
+circular_replay_buffer.py	../dopamine/replay_memory/circular_replay_buffer.py	1;"	kind:file	line:1
+circular_replay_buffer_test.py	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	1;"	kind:file	line:1
+classifiers	../setup.py	/^    classifiers=[  # Optional$/;"	kind:variable	line:57
+compute_features	../dopamine/discrete_domains/gym_lib.py	/^  def compute_features(self, features):$/;"	kind:member	line:158
+create_agent	../dopamine/discrete_domains/run_experiment.py	/^def create_agent(sess, environment, agent_name=None, summary_writer=None,$/;"	kind:function	line:54
+create_atari_environment	../dopamine/discrete_domains/atari_lib.py	/^def create_atari_environment(game_name=None, sticky_actions=True):$/;"	kind:function	line:51
+create_default_memory	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def create_default_memory(self):$/;"	kind:member	line:150
+create_default_memory	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def create_default_memory(self):$/;"	kind:member	line:36
+create_gym_environment	../dopamine/discrete_domains/gym_lib.py	/^def create_gym_environment(environment_name=None, version='v0'):$/;"	kind:function	line:55
+create_runner	../dopamine/discrete_domains/run_experiment.py	/^def create_runner(base_dir, schedule='continuous_train_and_eval'):$/;"	kind:function	line:93
+create_sampling_ops	../dopamine/replay_memory/circular_replay_buffer.py	/^  def create_sampling_ops(self, use_staging):$/;"	kind:member	line:775
+cursor	../dopamine/replay_memory/circular_replay_buffer.py	/^  def cursor(self):$/;"	kind:member	line:309
+description	../setup.py	/^    description=dopamine_description,$/;"	kind:variable	line:52
+dopamine_description	../setup.py	/^dopamine_description = ($/;"	kind:variable	line:41
+dqn_agent.py	../dopamine/agents/dqn/dqn_agent.py	1;"	kind:file	line:1
+dqn_agent_test.py	../tests/dopamine/agents/dqn/dqn_agent_test.py	1;"	kind:file	line:1
+end_episode	../dopamine/agents/dqn/dqn_agent.py	/^    def end_episode(self, reward):$/;"	kind:member	line:408
+extract_iteration	../dopamine/colab/utils.py	/^  def extract_iteration(x):$/;"	kind:function	line:152
+extract_iteration	../dopamine/discrete_domains/checkpointer.py	/^  def extract_iteration(x):$/;"	kind:function	line:67
+fake_make_env	../tests/dopamine/discrete_domains/atari_lib_test.py	/^    def fake_make_env(name):$/;"	kind:function	line:49
+fourier_dqn_network	../dopamine/discrete_domains/gym_lib.py	/^def fourier_dqn_network(min_vals,$/;"	kind:function	line:165
+get	../dopamine/replay_memory/sum_tree.py	/^  def get(self, node_index):$/;"	kind:member	line:168
+getScreenGrayscale	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def getScreenGrayscale(self, screen):  # pylint: disable=invalid-name$/;"	kind:member	line:70
+get_add_args_signature	../dopamine/replay_memory/circular_replay_buffer.py	/^  def get_add_args_signature(self):$/;"	kind:member	line:190
+get_add_args_signature	../dopamine/replay_memory/prioritized_replay_buffer.py	/^  def get_add_args_signature(self):$/;"	kind:member	line:96
+get_latest_checkpoint_number	../dopamine/discrete_domains/checkpointer.py	/^def get_latest_checkpoint_number(base_directory):$/;"	kind:function	line:57
+get_latest_file	../dopamine/colab/utils.py	/^def get_latest_file(path):$/;"	kind:function	line:118
+get_latest_iteration	../dopamine/colab/utils.py	/^def get_latest_iteration(path):$/;"	kind:function	line:134
+get_observation	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def get_observation(self):$/;"	kind:member	line:89
+get_observation_stack	../dopamine/replay_memory/circular_replay_buffer.py	/^  def get_observation_stack(self, index):$/;"	kind:member	line:343
+get_priority	../dopamine/replay_memory/prioritized_replay_buffer.py	/^  def get_priority(self, indices):$/;"	kind:member	line:212
+get_range	../dopamine/replay_memory/circular_replay_buffer.py	/^  def get_range(self, array, start_index, end_index):$/;"	kind:member	line:313
+get_storage_signature	../dopamine/replay_memory/circular_replay_buffer.py	/^  def get_storage_signature(self):$/;"	kind:member	line:201
+get_terminal_stack	../dopamine/replay_memory/circular_replay_buffer.py	/^  def get_terminal_stack(self, index):$/;"	kind:member	line:352
+get_transition_elements	../dopamine/replay_memory/circular_replay_buffer.py	/^  def get_transition_elements(self, batch_size=None):$/;"	kind:member	line:534
+get_transition_elements	../dopamine/replay_memory/prioritized_replay_buffer.py	/^  def get_transition_elements(self, batch_size=None):$/;"	kind:member	line:233
+gin_config_test.py	../tests/dopamine/tests/gin_config_test.py	1;"	kind:file	line:1
+gym_lib.py	../dopamine/discrete_domains/gym_lib.py	1;"	kind:file	line:1
+gym_lib_test.py	../tests/dopamine/discrete_domains/gym_lib_test.py	1;"	kind:file	line:1
+here	../setup.py	/^here = path.abspath(path.dirname(__file__))$/;"	kind:variable	line:28
+identity_epsilon	../dopamine/agents/dqn/dqn_agent.py	/^def identity_epsilon(unused_decay_period, unused_step, unused_warmup_steps,$/;"	kind:function	line:70
+implicit_quantile_agent.py	../dopamine/agents/implicit_quantile/implicit_quantile_agent.py	1;"	kind:file	line:1
+implicit_quantile_agent_test.py	../tests/dopamine/agents/implicit_quantile/implicit_quantile_agent_test.py	1;"	kind:file	line:1
+implicit_quantile_network	../dopamine/discrete_domains/atari_lib.py	/^def implicit_quantile_network(num_actions, quantile_embedding_dim,$/;"	kind:function	line:148
+include_package_data	../setup.py	/^    include_package_data=True,$/;"	kind:variable	line:47
+install_requires	../setup.py	/^    install_requires=install_requires,$/;"	kind:variable	line:50
+integration_test.py	../tests/dopamine/tests/integration_test.py	1;"	kind:file	line:1
+invalid_range	../dopamine/replay_memory/circular_replay_buffer.py	/^def invalid_range(cursor, replay_capacity, stack_size, update_horizon):$/;"	kind:function	line:54
+is_empty	../dopamine/replay_memory/circular_replay_buffer.py	/^  def is_empty(self):$/;"	kind:member	line:301
+is_full	../dopamine/replay_memory/circular_replay_buffer.py	/^  def is_full(self):$/;"	kind:member	line:305
+is_logging_enabled	../dopamine/discrete_domains/logger.py	/^  def is_logging_enabled(self):$/;"	kind:member	line:103
+is_valid_transition	../dopamine/replay_memory/circular_replay_buffer.py	/^  def is_valid_transition(self, index):$/;"	kind:member	line:356
+iteration_statistics.py	../dopamine/discrete_domains/iteration_statistics.py	1;"	kind:file	line:1
+iteration_statistics_test.py	../tests/dopamine/discrete_domains/iteration_statistics_test.py	1;"	kind:file	line:1
+keywords	../setup.py	/^    keywords='dopamine reinforcement-learning python machine learning'$/;"	kind:variable	line:91
+license	../setup.py	/^    license='Apache 2.0',$/;"	kind:variable	line:90
+linearly_decaying_epsilon	../dopamine/agents/dqn/dqn_agent.py	/^def linearly_decaying_epsilon(decay_period, step, warmup_steps, epsilon):$/;"	kind:function	line:45
+lives	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def lives(self):$/;"	kind:member	line:67
+load	../dopamine/replay_memory/circular_replay_buffer.py	/^  def load(self, checkpoint_dir, suffix):$/;"	kind:member	line:630
+load	../dopamine/replay_memory/circular_replay_buffer.py	/^  def load(self, checkpoint_dir, suffix):$/;"	kind:member	line:877
+load_baselines	../dopamine/colab/utils.py	/^def load_baselines(base_dir, verbose=False):$/;"	kind:function	line:50
+load_checkpoint	../dopamine/discrete_domains/checkpointer.py	/^  def load_checkpoint(self, iteration_number):$/;"	kind:member	line:165
+load_checkpoint	../tests/dopamine/discrete_domains/run_experiment_test.py	/^    def load_checkpoint(_):$/;"	kind:function	line:409
+load_gin_configs	../dopamine/discrete_domains/run_experiment.py	/^def load_gin_configs(gin_files, gin_bindings):$/;"	kind:function	line:39
+load_statistics	../dopamine/colab/utils.py	/^def load_statistics(log_path, iteration_number=None, verbose=True):$/;"	kind:function	line:87
+log_to_file	../dopamine/discrete_domains/logger.py	/^  def log_to_file(self, filename_prefix, iteration_number):$/;"	kind:member	line:76
+log_to_file	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def log_to_file(self, filename_prefix, iteration_number):$/;"	kind:member	line:93
+logger.py	../dopamine/discrete_domains/logger.py	1;"	kind:file	line:1
+logger_test.py	../tests/dopamine/discrete_domains/logger_test.py	1;"	kind:file	line:1
+long_description	../setup.py	/^    long_description=long_description,$/;"	kind:variable	line:53
+long_description	../setup.py	/^  long_description = f.read()$/;"	kind:variable	line:32
+main	../dopamine/discrete_domains/train.py	/^def main(unused_argv):$/;"	kind:function	line:47
+metadata	../dopamine/discrete_domains/atari_lib.py	/^  def metadata(self):$/;"	kind:member	line:276
+metadata	../dopamine/discrete_domains/gym_lib.py	/^  def metadata(self):$/;"	kind:member	line:326
+mock_fn	../tests/dopamine/discrete_domains/run_experiment_test.py	/^    def mock_fn(unused_sess, num_actions, summary_writer):$/;"	kind:function	line:120
+mock_fn	../tests/dopamine/discrete_domains/run_experiment_test.py	/^    def mock_fn(unused_sess, num_actions, summary_writer):$/;"	kind:function	line:133
+mock_fn	../tests/dopamine/discrete_domains/run_experiment_test.py	/^    def mock_fn(unused_sess, num_actions, summary_writer):$/;"	kind:function	line:146
+name	../dopamine/__init__.py	/^name = 'dopamine'$/;"	kind:variable	line:15
+name	../setup.py	/^    name='dopamine_rl',$/;"	kind:variable	line:45
+nature_dqn_network	../dopamine/agents/dqn/dqn_agent.py	/^nature_dqn_network = atari_lib.nature_dqn_network$/;"	kind:variable	line:41
+nature_dqn_network	../dopamine/discrete_domains/atari_lib.py	/^def nature_dqn_network(num_actions, network_type, state):$/;"	kind:function	line:87
+observation_space	../dopamine/discrete_domains/atari_lib.py	/^  def observation_space(self):$/;"	kind:member	line:261
+observation_space	../dopamine/discrete_domains/gym_lib.py	/^  def observation_space(self):$/;"	kind:member	line:314
+package_data	../setup.py	/^    package_data={'testdata': ['testdata\/*.gin']},$/;"	kind:variable	line:49
+packages	../setup.py	/^    packages=find_packages(exclude=['docs']),  # Required$/;"	kind:variable	line:48
+print_parameters	../dopamine/agents/dqn/dqn_agent.py	/^    def print_parameters(self):$/;"	kind:member	line:105
+prioritized_replay_buffer.py	../dopamine/replay_memory/prioritized_replay_buffer.py	1;"	kind:file	line:1
+prioritized_replay_buffer_test.py	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	1;"	kind:file	line:1
+project_distribution	../dopamine/agents/rainbow/rainbow_agent.py	/^def project_distribution(supports, weights, target_support,$/;"	kind:function	line:338
+project_urls	../setup.py	/^    project_urls={  # Optional$/;"	kind:variable	line:85
+quickDqnFlags	../tests/dopamine/tests/integration_test.py	/^  def quickDqnFlags(self):$/;"	kind:member	line:47
+quickDqnFlags	../tests/dopamine/tests/train_runner_integration_test.py	/^  def quickDqnFlags(self):$/;"	kind:member	line:43
+quickRainbowFlags	../tests/dopamine/tests/integration_test.py	/^  def quickRainbowFlags(self):$/;"	kind:member	line:59
+rainbow_agent.py	../dopamine/agents/rainbow/rainbow_agent.py	1;"	kind:file	line:1
+rainbow_agent_test.py	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	1;"	kind:file	line:1
+rainbow_network	../dopamine/discrete_domains/atari_lib.py	/^def rainbow_network(num_actions, num_atoms, support, network_type, state):$/;"	kind:function	line:109
+read_experiment	../dopamine/colab/utils.py	/^def read_experiment(log_path,$/;"	kind:function	line:194
+render	../dopamine/discrete_domains/atari_lib.py	/^  def render(self, mode):$/;"	kind:member	line:292
+render	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def render(self, mode):$/;"	kind:member	line:102
+render	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def render(self, mode):$/;"	kind:member	line:71
+reset	../dopamine/discrete_domains/atari_lib.py	/^  def reset(self):$/;"	kind:member	line:279
+reset	../dopamine/discrete_domains/gym_lib.py	/^  def reset(self):$/;"	kind:member	line:329
+reset	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def reset(self):$/;"	kind:member	line:84
+reset	../tests/dopamine/discrete_domains/gym_lib_test.py	/^  def reset(self):$/;"	kind:member	line:36
+reset	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def reset(self):$/;"	kind:member	line:57
+reward_range	../dopamine/discrete_domains/atari_lib.py	/^  def reward_range(self):$/;"	kind:member	line:272
+reward_range	../dopamine/discrete_domains/gym_lib.py	/^  def reward_range(self):$/;"	kind:member	line:322
+run_experiment	../dopamine/discrete_domains/run_experiment.py	/^  def run_experiment(self):$/;"	kind:member	line:468
+run_experiment.py	../dopamine/discrete_domains/run_experiment.py	1;"	kind:file	line:1
+run_experiment_test.py	../tests/dopamine/discrete_domains/run_experiment_test.py	1;"	kind:file	line:1
+sample	../dopamine/agents/dqn/dqn_agent.py	/^    def sample(self):$/;"	kind:member	line:99
+sample	../dopamine/replay_memory/sum_tree.py	/^  def sample(self, query_value=None):$/;"	kind:member	line:99
+sample_index_batch	../dopamine/replay_memory/circular_replay_buffer.py	/^  def sample_index_batch(self, batch_size):$/;"	kind:member	line:411
+sample_index_batch	../dopamine/replay_memory/prioritized_replay_buffer.py	/^  def sample_index_batch(self, batch_size):$/;"	kind:member	line:138
+sample_transition_batch	../dopamine/replay_memory/circular_replay_buffer.py	/^  def sample_transition_batch(self, batch_size=None, indices=None):$/;"	kind:member	line:453
+sample_transition_batch	../dopamine/replay_memory/prioritized_replay_buffer.py	/^  def sample_transition_batch(self, batch_size=None, indices=None):$/;"	kind:member	line:169
+save	../dopamine/replay_memory/circular_replay_buffer.py	/^  def save(self, checkpoint_dir, iteration_number):$/;"	kind:member	line:586
+save	../dopamine/replay_memory/circular_replay_buffer.py	/^  def save(self, checkpoint_dir, iteration_number):$/;"	kind:member	line:866
+save_checkpoint	../dopamine/discrete_domains/checkpointer.py	/^  def save_checkpoint(self, iteration_number, data):$/;"	kind:member	line:118
+scale	../dopamine/discrete_domains/gym_lib.py	/^  def scale(self, values):$/;"	kind:member	line:151
+set	../dopamine/replay_memory/sum_tree.py	/^  def set(self, node_index, value):$/;"	kind:member	line:178
+setUp	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def setUp(self):$/;"	kind:member	line:39
+setUp	../tests/dopamine/agents/implicit_quantile/implicit_quantile_agent_test.py	/^  def setUp(self):$/;"	kind:member	line:34
+setUp	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def setUp(self):$/;"	kind:member	line:292
+setUp	../tests/dopamine/atari_init_test.py	/^  def setUp(self):$/;"	kind:member	line:33
+setUp	../tests/dopamine/discrete_domains/checkpointer_test.py	/^  def setUp(self):$/;"	kind:member	line:35
+setUp	../tests/dopamine/discrete_domains/iteration_statistics_test.py	/^  def setUp(self):$/;"	kind:member	line:29
+setUp	../tests/dopamine/discrete_domains/logger_test.py	/^  def setUp(self):$/;"	kind:member	line:35
+setUp	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def setUp(self):$/;"	kind:member	line:193
+setUp	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def setUp(self):$/;"	kind:member	line:49
+setUp	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def setUp(self):$/;"	kind:member	line:644
+setUp	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def setUp(self):$/;"	kind:member	line:30
+setUp	../tests/dopamine/tests/gin_config_test.py	/^  def setUp(self):$/;"	kind:member	line:38
+setUp	../tests/dopamine/tests/integration_test.py	/^  def setUp(self):$/;"	kind:member	line:38
+setUp	../tests/dopamine/tests/train_runner_integration_test.py	/^  def setUp(self):$/;"	kind:member	line:36
+set_priority	../dopamine/replay_memory/prioritized_replay_buffer.py	/^  def set_priority(self, indices, priorities):$/;"	kind:member	line:199
+setup.py	../setup.py	1;"	kind:file	line:1
+slim	../dopamine/agents/dqn/dqn_agent.py	/^slim = tf.contrib.slim$/;"	kind:variable	line:34
+slim	../dopamine/agents/implicit_quantile/implicit_quantile_agent.py	/^slim = tf.contrib.slim$/;"	kind:variable	line:35
+slim	../dopamine/agents/rainbow/rainbow_agent.py	/^slim = tf.contrib.slim$/;"	kind:variable	line:51
+slim	../dopamine/discrete_domains/atari_lib.py	/^slim = tf.contrib.slim$/;"	kind:variable	line:40
+slim	../dopamine/discrete_domains/gym_lib.py	/^slim = tf.contrib.slim$/;"	kind:variable	line:51
+slim	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^slim = tf.contrib.slim$/;"	kind:variable	line:32
+slim	../tests/dopamine/agents/implicit_quantile/implicit_quantile_agent_test.py	/^slim = tf.contrib.slim$/;"	kind:variable	line:29
+slim	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^slim = tf.contrib.slim$/;"	kind:variable	line:30
+step	../dopamine/agents/dqn/dqn_agent.py	/^    def step(self, reward, observation):$/;"	kind:member	line:384
+step	../dopamine/discrete_domains/atari_lib.py	/^  def step(self, action):$/;"	kind:member	line:309
+step	../dopamine/discrete_domains/gym_lib.py	/^  def step(self, action):$/;"	kind:member	line:332
+step	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def step(self, action):$/;"	kind:member	line:93
+step	../tests/dopamine/discrete_domains/gym_lib_test.py	/^  def step(self, unused_action):$/;"	kind:member	line:39
+step	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def step(self, action):$/;"	kind:member	line:61
+stratified_sample	../dopamine/replay_memory/sum_tree.py	/^  def stratified_sample(self, batch_size):$/;"	kind:member	line:143
+sum_tree.py	../dopamine/replay_memory/sum_tree.py	1;"	kind:file	line:1
+sum_tree_test.py	../tests/dopamine/replay_memory/sum_tree_test.py	1;"	kind:file	line:1
+summarize_data	../dopamine/colab/utils.py	/^def summarize_data(data, summary_keys):$/;"	kind:function	line:159
+testAdd	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testAdd(self):$/;"	kind:member	line:83
+testAddManyValues	../tests/dopamine/discrete_domains/iteration_statistics_test.py	/^  def testAddManyValues(self):$/;"	kind:member	line:49
+testAddOneValue	../tests/dopamine/discrete_domains/iteration_statistics_test.py	/^  def testAddOneValue(self):$/;"	kind:member	line:37
+testAll	../tests/dopamine/discrete_domains/gym_lib_test.py	/^  def testAll(self):$/;"	kind:member	line:45
+testBeginEpisode	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testBeginEpisode(self):$/;"	kind:member	line:104
+testBeginEpisode	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testBeginEpisode(self):$/;"	kind:member	line:386
+testBundling	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testBundling(self):$/;"	kind:member	line:328
+testBundlingWithNonexistentDirectory	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testBundlingWithNonexistentDirectory(self):$/;"	kind:member	line:314
+testCapacityGreaterThanRequested	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testCapacityGreaterThanRequested(self):$/;"	kind:member	line:65
+testCheckAddTypes	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testCheckAddTypes(self):$/;"	kind:member	line:114
+testCheckpointExperiment	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testCheckpointExperiment(self, mock_logger_constructor,$/;"	kind:member	line:353
+testCheckpointingInitialization	../tests/dopamine/discrete_domains/checkpointer_test.py	/^  def testCheckpointingInitialization(self):$/;"	kind:member	line:40
+testConstructor	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testConstructor(self):$/;"	kind:member	line:67
+testConstructorCapacityNotLargeEnough	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testConstructorCapacityNotLargeEnough(self):$/;"	kind:member	line:656
+testConstructorWithExtraStorageTypes	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testConstructorWithExtraStorageTypes(self):$/;"	kind:member	line:684
+testConstructorWithExtraStorageTypes	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def testConstructorWithExtraStorageTypes(self):$/;"	kind:member	line:192
+testConstructorWithNoStaging	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testConstructorWithNoStaging(self):$/;"	kind:member	line:717
+testConstructorWithOutOfBoundsDiscountFactor	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testConstructorWithOutOfBoundsDiscountFactor(self):$/;"	kind:member	line:675
+testConstructorWithStaging	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testConstructorWithStaging(self):$/;"	kind:member	line:730
+testConstructorWithZeroUpdateHorizon	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testConstructorWithZeroUpdateHorizon(self):$/;"	kind:member	line:667
+testCreateAgentWithDefaults	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testCreateAgentWithDefaults(self):$/;"	kind:member	line:94
+testCreateAgentWithDefaults	../tests/dopamine/agents/implicit_quantile/implicit_quantile_agent_test.py	/^  def testCreateAgentWithDefaults(self):$/;"	kind:member	line:83
+testCreateAgentWithDefaults	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testCreateAgentWithDefaults(self):$/;"	kind:member	line:354
+testCreateAtariEnvironment	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def testCreateAtariEnvironment(self, mock_gym_make, mock_atari_lib):$/;"	kind:member	line:43
+testCreateAtariEnvironmentWithoutGameName	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def testCreateAtariEnvironmentWithoutGameName(self):$/;"	kind:member	line:37
+testCreateDQNAgent	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testCreateDQNAgent(self, mock_dqn_agent):$/;"	kind:member	line:119
+testCreateImplicitQuantileAgent	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testCreateImplicitQuantileAgent(self, mock_implicit_quantile_agent):$/;"	kind:member	line:145
+testCreateRainbowAgent	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testCreateRainbowAgent(self, mock_rainbow_agent):$/;"	kind:member	line:132
+testCreateRunner	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testCreateRunner(self, mock_create_agent, mock_runner_constructor):$/;"	kind:member	line:164
+testCreateRunnerUnknown	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testCreateRunnerUnknown(self):$/;"	kind:member	line:156
+testCreateTrainRunner	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testCreateTrainRunner(self, mock_create_agent, mock_runner_constructor):$/;"	kind:member	line:174
+testCustomObsDataType	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testCustomObsDataType(self):$/;"	kind:member	line:813
+testDefaultC51Config	../tests/dopamine/tests/gin_config_test.py	/^  def testDefaultC51Config(self):$/;"	kind:member	line:175
+testDefaultDQNConfig	../tests/dopamine/tests/gin_config_test.py	/^  def testDefaultDQNConfig(self):$/;"	kind:member	line:157
+testDefaultGinDqn	../tests/dopamine/tests/gin_config_test.py	/^  def testDefaultGinDqn(self):$/;"	kind:member	line:47
+testDefaultGinImplicitQuantileIcml	../tests/dopamine/tests/gin_config_test.py	/^  def testDefaultGinImplicitQuantileIcml(self):$/;"	kind:member	line:221
+testDefaultGinRainbow	../tests/dopamine/tests/gin_config_test.py	/^  def testDefaultGinRainbow(self):$/;"	kind:member	line:119
+testDefaultGinRmspropDqn	../tests/dopamine/tests/gin_config_test.py	/^  def testDefaultGinRmspropDqn(self):$/;"	kind:member	line:82
+testDefaultObsDataType	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testDefaultObsDataType(self):$/;"	kind:member	line:805
+testDefaultRainbowConfig	../tests/dopamine/tests/gin_config_test.py	/^  def testDefaultRainbowConfig(self):$/;"	kind:member	line:198
+testDummyScreensAddedToNewMemory	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def testDummyScreensAddedToNewMemory(self):$/;"	kind:member	line:63
+testExampleFromCodeComments	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testExampleFromCodeComments(self):$/;"	kind:member	line:216
+testExtraAdd	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testExtraAdd(self):$/;"	kind:member	line:95
+testFrameSkipAccumulatesReward	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def testFrameSkipAccumulatesReward(self):$/;"	kind:member	line:129
+testGarbageCollection	../tests/dopamine/discrete_domains/checkpointer_test.py	/^  def testGarbageCollection(self):$/;"	kind:member	line:98
+testGarbageCollection	../tests/dopamine/discrete_domains/logger_test.py	/^  def testGarbageCollection(self):$/;"	kind:member	line:91
+testGarbageCollectionWithCheckpointFrequency	../tests/dopamine/discrete_domains/checkpointer_test.py	/^  def testGarbageCollectionWithCheckpointFrequency(self):$/;"	kind:member	line:117
+testGetPriorityWithInvalidIndices	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def testGetPriorityWithInvalidIndices(self):$/;"	kind:member	line:69
+testGetRangeInvalidIndexOrder	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testGetRangeInvalidIndexOrder(self):$/;"	kind:member	line:160
+testGetRangeNoWraparound	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testGetRangeNoWraparound(self):$/;"	kind:member	line:182
+testGetRangeWithWraparound	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testGetRangeWithWraparound(self):$/;"	kind:member	line:211
+testGetStack	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testGetStack(self):$/;"	kind:member	line:262
+testInconsistentSupportsAndTargetSupportParameters	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testInconsistentSupportsAndTargetSupportParameters(self):$/;"	kind:member	line:64
+testInconsistentSupportsAndTargetSupportWithPlaceholders	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testInconsistentSupportsAndTargetSupportWithPlaceholders(self):$/;"	kind:member	line:73
+testInconsistentSupportsAndWeightsParameters	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testInconsistentSupportsAndWeightsParameters(self):$/;"	kind:member	line:35
+testInconsistentSupportsAndWeightsWithPlaceholders	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testInconsistentSupportsAndWeightsWithPlaceholders(self):$/;"	kind:member	line:43
+testInitializeCheckpointingWhenCheckpointUnbundleFails	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testInitializeCheckpointingWhenCheckpointUnbundleFails($/;"	kind:member	line:214
+testInitializeCheckpointingWhenCheckpointUnbundleSucceeds	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testInitializeCheckpointingWhenCheckpointUnbundleSucceeds($/;"	kind:member	line:239
+testInitializeCheckpointingWithNoCheckpointFile	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testInitializeCheckpointingWithNoCheckpointFile(self, mock_get_latest):$/;"	kind:member	line:204
+testIntegrationDqn	../tests/dopamine/tests/integration_test.py	/^  def testIntegrationDqn(self):$/;"	kind:member	line:88
+testIntegrationDqn	../tests/dopamine/tests/train_runner_integration_test.py	/^  def testIntegrationDqn(self):$/;"	kind:member	line:71
+testIntegrationRainbow	../tests/dopamine/tests/integration_test.py	/^  def testIntegrationRainbow(self):$/;"	kind:member	line:97
+testInvalidRange	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testInvalidRange(self):$/;"	kind:member	line:444
+testIsTransitionValid	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testIsTransitionValid(self):$/;"	kind:member	line:468
+testLinearlyDecayingEpsilon	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testLinearlyDecayingEpsilon(self):$/;"	kind:member	line:298
+testLoad	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testLoad(self):$/;"	kind:member	line:607
+testLoadFromNonexistentDirectory	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testLoadFromNonexistentDirectory(self):$/;"	kind:member	line:555
+testLoadGinConfigs	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testLoadGinConfigs(self, mock_parse_config_files_and_bindings):$/;"	kind:member	line:104
+testLoadLatestCheckpoint	../tests/dopamine/discrete_domains/checkpointer_test.py	/^  def testLoadLatestCheckpoint(self):$/;"	kind:member	line:88
+testLoadLatestCheckpointWithEmptyDir	../tests/dopamine/discrete_domains/checkpointer_test.py	/^  def testLoadLatestCheckpointWithEmptyDir(self):$/;"	kind:member	line:84
+testLoadLatestCheckpointWithInvalidDir	../tests/dopamine/discrete_domains/checkpointer_test.py	/^  def testLoadLatestCheckpointWithInvalidDir(self):$/;"	kind:member	line:80
+testLogExperiment	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testLogExperiment(self, mock_logger_constructor):$/;"	kind:member	line:334
+testLogToFileWithInvalidDirectory	../tests/dopamine/discrete_domains/logger_test.py	/^  def testLogToFileWithInvalidDirectory(self):$/;"	kind:member	line:68
+testLogToFileWithValidDirectory	../tests/dopamine/discrete_domains/logger_test.py	/^  def testLogToFileWithValidDirectory(self):$/;"	kind:member	line:73
+testLogToFileWithValidDirectoryCustomPrefix	../tests/dopamine/discrete_domains/checkpointer_test.py	/^  def testLogToFileWithValidDirectoryCustomPrefix(self):$/;"	kind:member	line:68
+testLogToFileWithValidDirectoryDefaultPrefix	../tests/dopamine/discrete_domains/checkpointer_test.py	/^  def testLogToFileWithValidDirectoryDefaultPrefix(self):$/;"	kind:member	line:58
+testLoggingDisabledWithEmptyDirectory	../tests/dopamine/discrete_domains/logger_test.py	/^  def testLoggingDisabledWithEmptyDirectory(self):$/;"	kind:member	line:40
+testLoggingDisabledWithInvalidDirectory	../tests/dopamine/discrete_domains/logger_test.py	/^  def testLoggingDisabledWithInvalidDirectory(self):$/;"	kind:member	line:44
+testLoggingEnabledWithValidDirectory	../tests/dopamine/discrete_domains/logger_test.py	/^  def testLoggingEnabledWithValidDirectory(self):$/;"	kind:member	line:48
+testLowCapacity	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testLowCapacity(self):$/;"	kind:member	line:131
+testLowPriorityElementNotFrequentlySampled	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def testLowPriorityElementNotFrequentlySampled(self):$/;"	kind:member	line:99
+testMaxFramePooling	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def testMaxFramePooling(self):$/;"	kind:member	line:140
+testMaxRecordedProbability	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testMaxRecordedProbability(self):$/;"	kind:member	line:148
+testMissingValue	../tests/dopamine/discrete_domains/iteration_statistics_test.py	/^  def testMissingValue(self):$/;"	kind:member	line:32
+testMultiDimensionalTargetSupport	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testMultiDimensionalTargetSupport(self):$/;"	kind:member	line:123
+testMultiDimensionalTargetSupportWithPlaceholders	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testMultiDimensionalTargetSupportWithPlaceholders(self):$/;"	kind:member	line:132
+testNSteprewardum	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testNSteprewardum(self):$/;"	kind:member	line:243
+testNegativeCapacity	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testNegativeCapacity(self):$/;"	kind:member	line:33
+testNewElementHasHighPriority	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def testNewElementHasHighPriority(self):$/;"	kind:member	line:92
+testNoAgentName	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testNoAgentName(self):$/;"	kind:member	line:114
+testNonTupleObservationShape	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testNonTupleObservationShape(self):$/;"	kind:member	line:226
+testOverrideGinDqn	../tests/dopamine/tests/gin_config_test.py	/^  def testOverrideGinDqn(self):$/;"	kind:member	line:100
+testOverrideGinImplicitQuantile	../tests/dopamine/tests/gin_config_test.py	/^  def testOverrideGinImplicitQuantile(self):$/;"	kind:member	line:258
+testOverrideGinImplicitQuantileIcml	../tests/dopamine/tests/gin_config_test.py	/^  def testOverrideGinImplicitQuantileIcml(self):$/;"	kind:member	line:239
+testOverrideGinRainbow	../tests/dopamine/tests/gin_config_test.py	/^  def testOverrideGinRainbow(self):$/;"	kind:member	line:137
+testOverrideRunnerParams	../tests/dopamine/tests/gin_config_test.py	/^  def testOverrideRunnerParams(self):$/;"	kind:member	line:63
+testPartialLoadFails	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testPartialLoadFails(self):$/;"	kind:member	line:572
+testProjectBatchOfDifferentDistributions	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testProjectBatchOfDifferentDistributions(self):$/;"	kind:member	line:231
+testProjectBatchOfDifferentDistributionsWithLargerDelta	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testProjectBatchOfDifferentDistributionsWithLargerDelta(self):$/;"	kind:member	line:273
+testProjectFromNonMonotonicSupport	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testProjectFromNonMonotonicSupport(self):$/;"	kind:member	line:204
+testProjectNewSupportHasInconsistentDeltask	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testProjectNewSupportHasInconsistentDeltask(self):$/;"	kind:member	line:166
+testProjectSingleDifferentDistribution	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testProjectSingleDifferentDistribution(self):$/;"	kind:member	line:192
+testProjectSingleIdenticalDistribution	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testProjectSingleIdenticalDistribution(self):$/;"	kind:member	line:180
+testProjectWithNonMonotonicTargetSupport	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testProjectWithNonMonotonicTargetSupport(self):$/;"	kind:member	line:152
+testResetPassesObservation	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def testResetPassesObservation(self):$/;"	kind:member	line:108
+testRunExperiment	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testRunExperiment(self, mock_logger_constructor,$/;"	kind:member	line:399
+testRunExperimentWithInconsistentRange	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testRunExperimentWithInconsistentRange(self, mock_logger_constructor,$/;"	kind:member	line:382
+testRunOneEpisode	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testRunOneEpisode(self):$/;"	kind:member	line:261
+testRunOneEpisodeWithLowMaxSteps	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testRunOneEpisodeWithLowMaxSteps(self):$/;"	kind:member	line:274
+testRunOneIteration	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testRunOneIteration(self):$/;"	kind:member	line:311
+testRunOnePhase	../tests/dopamine/discrete_domains/run_experiment_test.py	/^  def testRunOnePhase(self):$/;"	kind:member	line:286
+testSampleBatch	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def testSampleBatch(self):$/;"	kind:member	line:181
+testSampleFromEmptyTree	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testSampleFromEmptyTree(self):$/;"	kind:member	line:68
+testSampleIndexBatch	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def testSampleIndexBatch(self):$/;"	kind:member	line:126
+testSampleIndexBatchTooManyFailedRetries	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def testSampleIndexBatchTooManyFailedRetries(self):$/;"	kind:member	line:113
+testSamplePairWithUnevenProbabilities	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testSamplePairWithUnevenProbabilities(self):$/;"	kind:member	line:86
+testSamplePairWithUnevenProbabilitiesWithQueryValue	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testSamplePairWithUnevenProbabilitiesWithQueryValue(self):$/;"	kind:member	line:94
+testSampleSingleton	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testSampleSingleton(self):$/;"	kind:member	line:80
+testSampleTransitionBatch	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testSampleTransitionBatch(self):$/;"	kind:member	line:291
+testSampleTransitionBatchExtra	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testSampleTransitionBatchExtra(self):$/;"	kind:member	line:344
+testSampleWithInvalidQueryValue	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testSampleWithInvalidQueryValue(self):$/;"	kind:member	line:73
+testSamplingWithSeedDoesNotAffectFutureCalls	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testSamplingWithSeedDoesNotAffectFutureCalls(self):$/;"	kind:member	line:101
+testSamplingWithterminalInTrajectory	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testSamplingWithterminalInTrajectory(self):$/;"	kind:member	line:404
+testSave	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testSave(self):$/;"	kind:member	line:490
+testSaveNonNDArrayAttributes	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testSaveNonNDArrayAttributes(self):$/;"	kind:member	line:521
+testSetAndGetPriority	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def testSetAndGetPriority(self):$/;"	kind:member	line:162
+testSetAndGetPriority	../tests/dopamine/replay_memory/prioritized_replay_buffer_test.py	/^  def testSetAndGetPriority(self):$/;"	kind:member	line:78
+testSetEntry	../tests/dopamine/discrete_domains/logger_test.py	/^  def testSetEntry(self):$/;"	kind:member	line:52
+testSetNegativeValue	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testSetNegativeValue(self):$/;"	kind:member	line:38
+testSetValue	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testSetValue(self):$/;"	kind:member	line:54
+testSetValueSmallCapacity	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testSetValueSmallCapacity(self):$/;"	kind:member	line:49
+testShapes	../tests/dopamine/agents/implicit_quantile/implicit_quantile_agent_test.py	/^  def testShapes(self):$/;"	kind:member	line:93
+testShapesAndValues	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testShapesAndValues(self):$/;"	kind:member	line:364
+testSmallCapacityConstructor	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testSmallCapacityConstructor(self):$/;"	kind:member	line:43
+testStepEval	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testStepEval(self):$/;"	kind:member	line:140
+testStepEval	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testStepEval(self):$/;"	kind:member	line:422
+testStepTrain	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testStepTrain(self):$/;"	kind:member	line:175
+testStepTrain	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testStepTrain(self):$/;"	kind:member	line:457
+testStepTrainCustomObservationShapes	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testStepTrainCustomObservationShapes(self):$/;"	kind:member	line:283
+testStepTrainCustomStackSizes	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testStepTrainCustomStackSizes(self):$/;"	kind:member	line:293
+testStepTrainCustomTypes	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testStepTrainCustomTypes(self):$/;"	kind:member	line:288
+testStoreTransitionWithPrioritizedSamplingy	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testStoreTransitionWithPrioritizedSamplingy(self):$/;"	kind:member	line:509
+testStoreTransitionWithUniformSampling	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testStoreTransitionWithUniformSampling(self):$/;"	kind:member	line:495
+testStratifiedSampling	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testStratifiedSampling(self):$/;"	kind:member	line:139
+testStratifiedSamplingFromEmptyTree	../tests/dopamine/replay_memory/sum_tree_test.py	/^  def testStratifiedSamplingFromEmptyTree(self):$/;"	kind:member	line:134
+testTerminalPassedThrough	../tests/dopamine/discrete_domains/atari_lib_test.py	/^  def testTerminalPassedThrough(self):$/;"	kind:member	line:115
+testUnbundlingWithFailingReplayBuffer	../tests/dopamine/agents/dqn/dqn_agent_test.py	/^  def testUnbundlingWithFailingReplayBuffer(self):$/;"	kind:member	line:319
+testUsingPlaceholders	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testUsingPlaceholders(self):$/;"	kind:member	line:249
+testWithNontupleObservationShape	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testWithNontupleObservationShape(self):$/;"	kind:member	line:61
+testWrapperLoad	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testWrapperLoad(self):$/;"	kind:member	line:769
+testWrapperSave	../tests/dopamine/replay_memory/circular_replay_buffer_test.py	/^  def testWrapperSave(self):$/;"	kind:member	line:750
+testZeroDimensionalTargetSupport	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testZeroDimensionalTargetSupport(self):$/;"	kind:member	line:94
+testZeroDimensionalTargetSupportWithPlaceholders	../tests/dopamine/agents/rainbow/rainbow_agent_test.py	/^  def testZeroDimensionalTargetSupportWithPlaceholders(self):$/;"	kind:member	line:103
+test_atari_init	../tests/dopamine/atari_init_test.py	/^  def test_atari_init(self):$/;"	kind:member	line:45
+test_q_value_computation	../tests/dopamine/agents/implicit_quantile/implicit_quantile_agent_test.py	/^  def test_q_value_computation(self):$/;"	kind:member	line:127
+test_replay_quantile_value_computation	../tests/dopamine/agents/implicit_quantile/implicit_quantile_agent_test.py	/^  def test_replay_quantile_value_computation(self):$/;"	kind:member	line:152
+test_utils.py	../dopamine/utils/test_utils.py	1;"	kind:file	line:1
+tests_require	../setup.py	/^    tests_require=tests_require,$/;"	kind:variable	line:51
+tf_get_priority	../dopamine/replay_memory/prioritized_replay_buffer.py	/^  def tf_get_priority(self, indices):$/;"	kind:member	line:344
+tf_set_priority	../dopamine/replay_memory/prioritized_replay_buffer.py	/^  def tf_set_priority(self, indices, priorities):$/;"	kind:member	line:330
+train.py	../dopamine/discrete_domains/train.py	1;"	kind:file	line:1
+train_runner_integration_test.py	../tests/dopamine/tests/train_runner_integration_test.py	1;"	kind:file	line:1
+unbundle	../dopamine/agents/dqn/dqn_agent.py	/^    def unbundle(self, checkpoint_dir, iteration_number, bundle_dictionary):$/;"	kind:member	line:541
+unpack_transition	../dopamine/replay_memory/circular_replay_buffer.py	/^  def unpack_transition(self, transition_tensors, transition_type):$/;"	kind:member	line:844
+update_posterior	../dopamine/agents/dqn/dqn_agent.py	/^    def update_posterior(self, X, y, n):$/;"	kind:member	line:82
+url	../setup.py	/^    url='https:\/\/github.com\/google\/dopamine',  # Optional$/;"	kind:variable	line:54
+utils.py	../dopamine/colab/utils.py	1;"	kind:file	line:1
+verifyFilesCreated	../tests/dopamine/tests/integration_test.py	/^  def verifyFilesCreated(self, base_dir):$/;"	kind:member	line:74
+verifyFilesCreated	../tests/dopamine/tests/train_runner_integration_test.py	/^  def verifyFilesCreated(self, base_dir):$/;"	kind:member	line:57
+version	../setup.py	/^    version='2.0.1',$/;"	kind:variable	line:46

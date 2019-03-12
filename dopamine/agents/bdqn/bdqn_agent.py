@@ -1,18 +1,4 @@
-# coding=utf-8
-# Copyright 2018 The Dopamine Authors.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""Compact implementation of a DQN agent."""
+"""Compact implementation of a BDQN agent."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -28,52 +14,25 @@ from dopamine.discrete_domains import atari_lib
 from dopamine.replay_memory import circular_replay_buffer
 import numpy as np
 import tensorflow as tf
+import tensorflow_probability as tfp
 
 import gin.tf
 
 slim = tf.contrib.slim
-
+tfd = tfp.distributions
 
 # These are aliases which are used by other classes.
 NATURE_DQN_OBSERVATION_SHAPE = atari_lib.NATURE_DQN_OBSERVATION_SHAPE
 NATURE_DQN_DTYPE = atari_lib.NATURE_DQN_DTYPE
 NATURE_DQN_STACK_SIZE = atari_lib.NATURE_DQN_STACK_SIZE
-nature_dqn_network = atari_lib.nature_dqn_network
+bayesian_dqn_network = atari_lib.bayesian_dqn_network
+
+Prior = collections.namedtuple(
+    'Prior', ['mean', 'inv_cov', 'a', 'b'])
 
 
 @gin.configurable
-def linearly_decaying_epsilon(decay_period, step, warmup_steps, epsilon):
-    """Returns the current epsilon for the agent's epsilon-greedy policy.
-
-    This follows the Nature DQN schedule of a linearly decaying epsilon (Mnih et
-    al., 2015). The schedule is as follows:
-      Begin at 1. until warmup_steps steps have been taken; then
-      Linearly decay epsilon from 1. to epsilon in decay_period steps; and then
-      Use epsilon from there on.
-
-    Args:
-      decay_period: float, the period over which epsilon is decayed.
-      step: int, the number of training steps completed so far.
-      warmup_steps: int, the number of steps taken before epsilon is decayed.
-      epsilon: float, the final value to which to decay the epsilon parameter.
-
-    Returns:
-      A float, the current epsilon value computed according to the schedule.
-    """
-    steps_left = decay_period + warmup_steps - step
-    bonus = (1.0 - epsilon) * steps_left / decay_period
-    bonus = np.clip(bonus, 0., 1. - epsilon)
-    return epsilon + bonus
-
-
-@gin.configurable
-def identity_epsilon(unused_decay_period, unused_step, unused_warmup_steps,
-                     epsilon):
-    return epsilon
-
-
-@gin.configurable
-class DQNAgent(object):
+class BDQNAgent():
     """An implementation of the DQN agent."""
 
     def __init__(self,
@@ -82,16 +41,12 @@ class DQNAgent(object):
                  observation_shape=atari_lib.NATURE_DQN_OBSERVATION_SHAPE,
                  observation_dtype=atari_lib.NATURE_DQN_DTYPE,
                  stack_size=atari_lib.NATURE_DQN_STACK_SIZE,
-                 network=atari_lib.nature_dqn_network,
+                 network=atari_lib.bayesian_dqn_network,
                  gamma=0.99,
                  update_horizon=1,
                  min_replay_history=20000,
                  update_period=4,
                  target_update_period=8000,
-                 epsilon_fn=linearly_decaying_epsilon,
-                 epsilon_train=0.01,
-                 epsilon_eval=0.001,
-                 epsilon_decay_period=250000,
                  tf_device='/cpu:*',
                  use_staging=True,
                  max_tf_checkpoints_to_keep=4,
@@ -124,13 +79,6 @@ class DQNAgent(object):
             before the agent begins training its value function.
           update_period: int, period between DQN updates.
           target_update_period: int, update period for the target network.
-          epsilon_fn: function expecting 4 parameters:
-            (decay_period, step, warmup_steps, epsilon). This function should return
-            the epsilon value used for exploration during training.
-          epsilon_train: float, the value to which the agent's epsilon is eventually
-            decayed during training.
-          epsilon_eval: float, epsilon used when evaluating the agent.
-          epsilon_decay_period: int, length of the epsilon decay schedule.
           tf_device: str, Tensorflow device on which the agent's graph is executed.
           use_staging: bool, when True use a staging area to prefetch the next
             training batch, speeding training up by about 30%.
@@ -150,9 +98,6 @@ class DQNAgent(object):
         tf.logging.info('\t min_replay_history: %d', min_replay_history)
         tf.logging.info('\t update_period: %d', update_period)
         tf.logging.info('\t target_update_period: %d', target_update_period)
-        tf.logging.info('\t epsilon_train: %f', epsilon_train)
-        tf.logging.info('\t epsilon_eval: %f', epsilon_eval)
-        tf.logging.info('\t epsilon_decay_period: %d', epsilon_decay_period)
         tf.logging.info('\t tf_device: %s', tf_device)
         tf.logging.info('\t use_staging: %s', use_staging)
         tf.logging.info('\t optimizer: %s', optimizer)
@@ -167,10 +112,6 @@ class DQNAgent(object):
         self.cumulative_gamma = math.pow(gamma, update_horizon)
         self.min_replay_history = min_replay_history
         self.target_update_period = target_update_period
-        self.epsilon_fn = epsilon_fn
-        self.epsilon_train = epsilon_train
-        self.epsilon_eval = epsilon_eval
-        self.epsilon_decay_period = epsilon_decay_period
         self.update_period = update_period
         self.eval_mode = False
         self.training_steps = 0
@@ -185,17 +126,23 @@ class DQNAgent(object):
             self.state = np.zeros(state_shape)
             self.state_ph = tf.placeholder(self.observation_dtype, state_shape,
                                            name='state_ph')
+            self.next_state_ph = tf.placeholder(self.observation_dtype, state_shape,
+                                                name='next_state_ph')
+            self.reward_ph = tf.placeholder(tf.float32, (),
+                                            name='reward')
 
             self._replay = self._build_replay_buffer(use_staging)
 
             self._build_networks()
 
             self._train_op = self._build_train_op()
+            self._update_priors_op = self._build_update_priors_op()
             self._sync_qt_ops = self._build_sync_op()
 
         if self.summary_writer is not None:
             # All tf.summaries should have been defined prior to running this.
             self._merged_summaries = tf.summary.merge_all()
+
         self._sess = sess
         self._saver = tf.train.Saver(max_to_keep=max_tf_checkpoints_to_keep)
 
@@ -204,13 +151,40 @@ class DQNAgent(object):
         self._observation = None
         self._last_observation = None
 
+    def _build_replay_buffer(self, use_staging):
+        """Creates the replay buffer used by the agent.
+
+        Args:
+          use_staging: bool, if True, uses a staging area to prefetch data for
+            faster training.
+
+        Returns:
+          A WrapperReplayBuffer object.
+        """
+        return circular_replay_buffer.WrappedReplayBuffer(
+            observation_shape=self.observation_shape,
+            stack_size=self.stack_size,
+            use_staging=use_staging,
+            update_horizon=self.update_horizon,
+            gamma=self.gamma,
+            observation_dtype=self.observation_dtype.as_numpy_dtype)
+
     def _get_network_type(self):
-        """Returns the type of the outputs of a Q value network.
+        """Returns the type of the outputs of a BDQN value network.
 
         Returns:
           net_type: _network_type object defining the outputs of the network.
         """
-        return collections.namedtuple('DQN_network', ['q_values'])
+        return collections.namedtuple('BDQN_network', ['q_values', 'encoding', ])
+
+    def _get_bayesian_regression_type(self):
+        """Returns the type of the outputs from the bayes regression.
+
+        Returns:
+            A tuple defining the interface to the bayesian regression.
+
+        """
+        return collections.namedtuple('Gaussian_Bayes', ['sample', 'prior'])
 
     def _network_template(self, state):
         """Builds the convolutional network used to compute the agent's Q-values.
@@ -222,6 +196,70 @@ class DQNAgent(object):
           net: _network_type object containing the tensors output by the network.
         """
         return self.network(self.num_actions, self._get_network_type(), state)
+
+    def _build_prior(self, size, action):
+        with tf.variable_scope("action"+str(action)):
+            mu = tf.get_variable("mean", initializer=tf.cast(
+                np.zeros((size, 1)), dtype=tf.float32))
+            inv_cov = tf.get_variable("inv_cov", initializer=tf.cast(
+                np.eye(size), dtype=tf.float32))
+            b = tf.get_variable(
+                "b", initializer=tf.cast(1.0, dtype=tf.float32))
+            a = tf.get_variable(
+                "a", initializer=tf.cast(1.0, dtype=tf.float32))
+
+            prior = Prior(mu, inv_cov, a, b)
+        return prior
+
+    def _sample_op(self, action, encoding):
+
+        num_samples = tf.shape(encoding)[0]
+        prior = self._priors[action]
+
+        noise_dist = tfd.InverseGamma(concentration=prior.a, rate=prior.b)
+        noise_samples = noise_dist.sample(num_samples)
+
+        cov = tf.linalg.inv(prior.inv_cov)
+
+        coef_dist = tfd.MultivariateNormalFullCovariance(
+            loc=tf.reshape(prior.mean, [-1]), covariance_matrix=cov)
+
+        coef_samples = coef_dist.sample(num_samples)
+
+        sample = tf.matmul(coef_samples, tf.transpose(
+            encoding)) + noise_samples
+
+        return tf.squeeze(sample)
+
+    def _max_sample_op(self, encoding):
+        return tf.reduce_max(
+            tf.stack([self._sample_op(action, encoding) for action in range(0, self.num_actions)]))
+
+    def _argmax_sample_op(self, encoding):
+        return tf.argmax(
+            tf.stack([self._sample_op(action, encoding) for action in range(0, self.num_actions)]))
+
+    def _update_single_prior_op(self, prior, encoding, target):
+        xT = tf.transpose(encoding)
+        xTx = xT@encoding
+        update_mu = tf.linalg.inv(xTx + prior.inv_cov)@\
+            (xT*target + prior.inv_cov@prior.mean)
+
+        update_inv_cov = xTx + prior.inv_cov
+
+        update_a = prior.a + 1/2
+
+        update_b = prior.b + 0.5 * \
+            tf.squeeze(tf.transpose(target)*target +
+                       tf.transpose(prior.mean)@prior.inv_cov@prior.mean +
+                       tf.transpose(update_mu)@update_inv_cov@update_mu)
+
+        update = Prior(prior.mean.assign(update_mu),
+                       prior.inv_cov.assign(update_inv_cov),
+                       prior.a.assign(update_a),
+                       prior.b.assign(update_b))
+
+        return update
 
     def _build_networks(self):
         """Builds the Q-value network computations needed for acting and training.
@@ -243,32 +281,43 @@ class DQNAgent(object):
         self.target_convnet = tf.make_template(
             'Target', self._network_template)
         self._net_outputs = self.online_convnet(self.state_ph)
-        # TODO(bellemare): Ties should be broken. They are unlikely to happen when
-        # using a deep network, but may affect performance with a linear
-        # approximation scheme.
-        self._q_argmax = tf.argmax(self._net_outputs.q_values, axis=1)[0]
 
+        # DQN stuff
         self._replay_net_outputs = self.online_convnet(self._replay.states)
         self._replay_next_target_net_outputs = self.target_convnet(
             self._replay.next_states)
 
-    def _build_replay_buffer(self, use_staging):
-        """Creates the replay buffer used by the agent.
+        # Bayesian stuff
+        # Setup regressions
+        self._priors = [0]*self.num_actions
+        encoding_size = self._net_outputs.encoding.get_shape()[1]
+        for i in range(0, self.num_actions):
+            self._priors[i] = self._build_prior(encoding_size, i)
 
-        Args:
-          use_staging: bool, if True, uses a staging area to prefetch data for
-            faster training.
+        # Action Selection
+        self._q_argmax = self._argmax_sample_op(self._net_outputs.encoding)
 
-        Returns:
-          A WrapperReplayBuffer object.
-        """
-        return circular_replay_buffer.WrappedReplayBuffer(
-            observation_shape=self.observation_shape,
-            stack_size=self.stack_size,
-            use_staging=use_staging,
-            update_horizon=self.update_horizon,
-            gamma=self.gamma,
-            observation_dtype=self.observation_dtype.as_numpy_dtype)
+    def _build_update_priors_op(self):
+        # Assume 4 actions
+        # Split
+        updates = [0]*self.num_actions
+        for action in range(0, self.num_actions):
+            boolean_mask = tf.equal(self._replay.actions, action)
+            rewards = tf.boolean_mask(self._replay.rewards, boolean_mask)
+            terminals = tf.boolean_mask(self._replay.terminals, boolean_mask)
+            state_q_encoding = tf.boolean_mask(
+                self._replay_net_outputs.encoding, boolean_mask)
+            next_state_q_encoding = tf.boolean_mask(
+                self._replay_next_target_net_outputs.encoding, boolean_mask)
+
+            target = rewards + self.cumulative_gamma * \
+                self._max_sample_op(next_state_q_encoding) * \
+                (1. - tf.cast(terminals, tf.float32))
+
+            updates[action] = self._update_single_prior_op(
+                self._priors[action], state_q_encoding, target)
+
+        return updates
 
     def _build_target_q_op(self):
         """Build an op used as a target for the Q-value.
@@ -391,20 +440,7 @@ class DQNAgent(object):
         Returns:
            int, the selected action.
         """
-        if self.eval_mode:
-            epsilon = self.epsilon_eval
-        else:
-            epsilon = self.epsilon_fn(
-                self.epsilon_decay_period,
-                self.training_steps,
-                self.min_replay_history,
-                self.epsilon_train)
-        if random.random() <= epsilon:
-            # Choose a random action with probability epsilon.
-            return random.randint(0, self.num_actions - 1)
-        else:
-            # Choose the action with highest Q-value at the current state.
-            return self._sess.run(self._q_argmax, {self.state_ph: self.state})
+        return self._sess.run(self._q_argmax, {self.state_ph: self.state})
 
     def _train_step(self):
         """Runs a single training step.
@@ -418,9 +454,10 @@ class DQNAgent(object):
         """
         # Run a train op at the rate of self.update_period if enough training steps
         # have been run. This matches the Nature DQN behaviour.
+
         if self._replay.memory.add_count > self.min_replay_history:
             if self.training_steps % self.update_period == 0:
-                self._sess.run(self._train_op)
+                self._sess.run(self._train_op, self._update_priors_op)
                 if (self.summary_writer is not None and
                     self.training_steps > 0 and
                         self.training_steps % self.summary_writing_frequency == 0):
