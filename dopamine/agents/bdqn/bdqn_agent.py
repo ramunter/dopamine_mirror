@@ -15,7 +15,7 @@ from dopamine.replay_memory import circular_replay_buffer
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
-
+import pdb
 import gin.tf
 
 slim = tf.contrib.slim
@@ -212,11 +212,11 @@ class BDQNAgent():
         return prior
 
     def _sample_op(self, action, encoding):
-
-        num_samples = tf.shape(encoding)[0]
+        # TODO: Sampling 1 coef for all samples
+        num_samples = 1  # tf.shape(encoding)[0]
         prior = self._priors[action]
 
-        noise_dist = tfd.InverseGamma(concentration=prior.a, rate=prior.b)
+        noise_dist = tfd.InverseGamma(concentration=prior.a, rate=1/prior.b)
         noise_samples = noise_dist.sample(num_samples)
 
         cov = tf.linalg.inv(prior.inv_cov)
@@ -229,28 +229,32 @@ class BDQNAgent():
         sample = tf.matmul(coef_samples, tf.transpose(
             encoding)) + noise_samples
 
-        return tf.squeeze(sample)
+        return tf.reshape(sample, (num_samples, -1))
 
     def _max_sample_op(self, encoding):
+
         return tf.reduce_max(
-            tf.stack([self._sample_op(action, encoding) for action in range(0, self.num_actions)]))
+            tf.stack([self._sample_op(action, encoding) for action in range(0, self.num_actions)]), axis=0)
 
     def _argmax_sample_op(self, encoding):
         return tf.argmax(
-            tf.stack([self._sample_op(action, encoding) for action in range(0, self.num_actions)]))
+            tf.stack([self._sample_op(action, encoding) for action in range(0, self.num_actions)]), axis=0)
 
     def _update_single_prior_op(self, prior, encoding, target):
         xT = tf.transpose(encoding)
         xTx = xT@encoding
+
+        target = tf.reshape(target, [-1, 1], name="target")
+
         update_mu = tf.linalg.inv(xTx + prior.inv_cov)@\
-            (xT*target + prior.inv_cov@prior.mean)
+            (xT@target + prior.inv_cov@prior.mean)
 
         update_inv_cov = xTx + prior.inv_cov
 
         update_a = prior.a + 1/2
 
         update_b = prior.b + 0.5 * \
-            tf.squeeze(tf.transpose(target)*target +
+            tf.squeeze(tf.transpose(target)@target +
                        tf.transpose(prior.mean)@prior.inv_cov@prior.mean +
                        tf.transpose(update_mu)@update_inv_cov@update_mu)
 
@@ -409,7 +413,6 @@ class BDQNAgent():
         """
         self._last_observation = self._observation
         self._record_observation(observation)
-
         if not self.eval_mode:
             self._store_transition(
                 self._last_observation, self.action, reward, False)
@@ -440,7 +443,7 @@ class BDQNAgent():
         Returns:
            int, the selected action.
         """
-        return self._sess.run(self._q_argmax, {self.state_ph: self.state})
+        return np.asscalar(self._sess.run(self._q_argmax, {self.state_ph: self.state}))
 
     def _train_step(self):
         """Runs a single training step.
@@ -457,11 +460,18 @@ class BDQNAgent():
 
         if self._replay.memory.add_count > self.min_replay_history:
             if self.training_steps % self.update_period == 0:
-                self._sess.run(self._train_op, self._update_priors_op)
+                self._sess.run([self._train_op, self._update_priors_op])
+                # priors = self._sess.run(self._priors)
+                # print("===================")
+                # for action in range(0, self.num_actions):
+                #     print("Action:", action)
+                #     print(priors[action])
+
                 if (self.summary_writer is not None and
                     self.training_steps > 0 and
                         self.training_steps % self.summary_writing_frequency == 0):
                     summary = self._sess.run(self._merged_summaries)
+
                     self.summary_writer.add_summary(
                         summary, self.training_steps)
 

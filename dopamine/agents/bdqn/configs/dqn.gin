@@ -7,13 +7,13 @@ import dopamine.agents.dqn.dqn_agent
 import dopamine.replay_memory.circular_replay_buffer
 import gin.tf.external_configurables
 
-DQNAgent.gamma = 0.99
-DQNAgent.update_horizon = 1
-DQNAgent.min_replay_history = 20000  # agent steps
-DQNAgent.update_period = 4
-DQNAgent.target_update_period = 8000  # agent steps
-DQNAgent.tf_device = '/cpu:0'  # use '/cpu:*' for non-GPU version
-DQNAgent.optimizer = @tf.train.RMSPropOptimizer()
+BDQNAgent.gamma = 0.99
+BDQNAgent.update_horizon = 1
+BDQNAgent.min_replay_history = 200  # agent steps
+BDQNAgent.update_period = 4
+BDQNAgent.target_update_period = 8000  # agent steps
+BDQNAgent.tf_device = '/cpu:0'  # use '/cpu:*' for non-GPU version
+BDQNAgent.optimizer = @tf.train.RMSPropOptimizer()
 
 tf.train.RMSPropOptimizer.learning_rate = 0.00025
 tf.train.RMSPropOptimizer.decay = 0.95
