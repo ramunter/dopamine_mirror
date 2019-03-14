@@ -299,7 +299,9 @@ class BDQNAgent():
             self._priors[i] = self._build_prior(encoding_size, i)
 
         # Action Selection
-        self._q_argmax = self._argmax_sample_op(self._net_outputs.encoding)
+        self._q_argmax = tf.argmax(self._net_outputs.q_values, axis=1)[0]
+        self._sample_q_argmax = self._argmax_sample_op(
+            self._net_outputs.encoding)
 
     def _build_update_priors_op(self):
         # Assume 4 actions
@@ -443,7 +445,9 @@ class BDQNAgent():
         Returns:
            int, the selected action.
         """
-        return np.asscalar(self._sess.run(self._q_argmax, {self.state_ph: self.state}))
+        if self.eval_mode:
+            self._sess.run(self._q_argmax, {self.state_ph, self.state})
+        return np.asscalar(self._sess.run(self._sample_q_argmax, {self.state_ph: self.state}))
 
     def _train_step(self):
         """Runs a single training step.
