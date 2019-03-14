@@ -9,10 +9,10 @@ import gin.tf.external_configurables
 
 BDQNAgent.gamma = 0.99
 BDQNAgent.update_horizon = 1
-BDQNAgent.min_replay_history = 200  # agent steps
+BDQNAgent.min_replay_history = 20000  # agent steps
 BDQNAgent.update_period = 4
 BDQNAgent.target_update_period = 8000  # agent steps
-BDQNAgent.tf_device = '/cpu:0'  # use '/cpu:*' for non-GPU version
+BDQNAgent.tf_device = '/gpu:0'  # use '/cpu:*' for non-GPU version
 BDQNAgent.optimizer = @tf.train.RMSPropOptimizer()
 
 tf.train.RMSPropOptimizer.learning_rate = 0.00025
@@ -25,7 +25,7 @@ atari_lib.create_atari_environment.game_name = 'Pong'
 # Sticky actions with probability 0.25, as suggested by (Machado et al., 2017).
 atari_lib.create_atari_environment.sticky_actions = True
 create_agent.agent_name = 'bdqn'
-Runner.num_iterations = 200
+Runner.num_iterations = 20
 Runner.training_steps = 250000  # agent steps
 Runner.evaluation_steps = 125000  # agent steps
 Runner.max_steps_per_episode = 27000  # agent steps
