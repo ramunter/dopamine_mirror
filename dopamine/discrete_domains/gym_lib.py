@@ -98,11 +98,30 @@ def _basic_discrete_domain_network(min_vals, max_vals, num_actions, state,
   net = slim.fully_connected(net, 512)
   if num_atoms is None:
     # We are constructing a DQN-style network.
-    return slim.fully_connected(net, num_actions, activation_fn=None)
+    return net, slim.fully_connected(net, num_actions, activation_fn=None)
   else:
     # We are constructing a rainbow-style network.
     return slim.fully_connected(net, num_actions * num_atoms,
                                 activation_fn=None)
+
+@gin.configurable
+def cartpole_bdqn_network(num_actions, network_type, state):
+  """Builds the deep network used to compute the agent's Q-values.
+
+  It rescales the input features to a range that yields improved performance.
+
+  Args:
+    num_actions: int, number of actions.
+    network_type: namedtuple, collection of expected values to return.
+    state: `tf.Tensor`, contains the agent's current state.
+
+  Returns:
+    net: _network_type object containing the tensors output by the network.
+  """
+  net, q_values = _basic_discrete_domain_network(
+      CARTPOLE_MIN_VALS, CARTPOLE_MAX_VALS, num_actions, state)
+  return network_type(q_values, net)
+
 
 
 @gin.configurable
