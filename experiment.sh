@@ -8,6 +8,6 @@
 
 HOMEDIR=${SLURM_SUBMIT_DIR}
 cd ${HOMEDIR}
-module load GCC/7.3.0-2.30  OpenMPI/3.1.1 TensorFlow/1.12.0-Python-3.6.6 
+module load goolfc/2017b Python/3.6.3 cuDNN/7
 source venv/bin/activate
-nice python -um dopamine.discrete_domains.train --base_dir=//lustre1/work/ramunter/bdqn --gin_files='dopamine/agents/bdqn/configs/dqn.gin'
+nice python -um dopamine.discrete_domains.train --base_dir=//lustre1/work/ramunter/bdqn_cartpole --gin_files='dopamine/agents/bdqn/configs/dqn_cartpole.gin'
