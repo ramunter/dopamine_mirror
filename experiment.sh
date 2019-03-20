@@ -3,8 +3,8 @@
 #SBATCH --gres=gpu:1 
 #SBATCH --time=72:00:00 
 #SBATCH --partition=EPICALL 
-#SBATCH --job-name="Bayesian DQN"
-#SBATCH --output=bayesiandqn.out
+#SBATCH --job-name="cartpole bdqn"
+#SBATCH --output=cartpolebdqn.out
 
 HOMEDIR=${SLURM_SUBMIT_DIR}
 cd ${HOMEDIR}

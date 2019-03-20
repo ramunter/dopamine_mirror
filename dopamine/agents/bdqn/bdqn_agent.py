@@ -221,8 +221,11 @@ class BDQNAgent():
 
         cov = tf.linalg.inv(prior.inv_cov)
 
-        coef_dist = tfd.MultivariateNormalFullCovariance(
-            loc=tf.reshape(prior.mean, [-1]), covariance_matrix=cov)
+        #coef_dist = tfd.MultivariateNormalFullCovariance(
+        #    loc=tf.reshape(prior.mean, [-1]), covariance_matrix=cov, validate_args=True)
+	
+        coef_dist = tfd.MultivariateNormalDiag(
+            loc=tf.reshape(prior.mean, [-1]), scale_diag=tf.linalg.tensor_diag_part(cov))
 
         coef_samples = coef_dist.sample(num_samples)
 
@@ -446,7 +449,7 @@ class BDQNAgent():
            int, the selected action.
         """
         if self.eval_mode:
-            self._sess.run(self._q_argmax, {self.state_ph, self.state})
+            return self._sess.run(self._q_argmax, {self.state_ph: self.state})
         return np.asscalar(self._sess.run(self._sample_q_argmax, {self.state_ph: self.state}))
 
     def _train_step(self):
