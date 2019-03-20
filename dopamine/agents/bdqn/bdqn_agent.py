@@ -212,27 +212,27 @@ class BDQNAgent():
         return prior
 
     def _sample_op(self, action, encoding):
-        # TODO: Sampling 1 coef for all samples
-        num_samples = 1  # tf.shape(encoding)[0]
+        # TODO: Currently sampling coef once for all samples returned
+        num_samples = tf.shape(encoding)[0]
         prior = self._priors[action]
 
         noise_dist = tfd.InverseGamma(concentration=prior.a, rate=1/prior.b)
-        noise_samples = noise_dist.sample(num_samples)
+        noise_samples = noise_dist.sample(1)
 
         cov = tf.linalg.inv(prior.inv_cov)
 
-        #coef_dist = tfd.MultivariateNormalFullCovariance(
+        # coef_dist = tfd.MultivariateNormalFullCovariance(
         #    loc=tf.reshape(prior.mean, [-1]), covariance_matrix=cov, validate_args=True)
-	
+
         coef_dist = tfd.MultivariateNormalDiag(
             loc=tf.reshape(prior.mean, [-1]), scale_diag=tf.linalg.tensor_diag_part(cov))
 
-        coef_samples = coef_dist.sample(num_samples)
+        coef_samples = coef_dist.sample(1)
 
-        sample = tf.matmul(coef_samples, tf.transpose(
-            encoding)) + noise_samples
+        sample = tf.matmul(encoding, tf.transpose(
+            coef_samples)) + noise_samples
 
-        return tf.reshape(sample, (num_samples, -1))
+        return tf.reshape(sample, (num_samples,))
 
     def _max_sample_op(self, encoding):
 
