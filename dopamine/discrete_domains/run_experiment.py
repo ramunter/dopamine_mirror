@@ -53,7 +53,7 @@ def load_gin_configs(gin_files, gin_bindings):
 
 @gin.configurable
 def create_agent(sess, environment, agent_name=None, summary_writer=None,
-                 debug_mode=False):
+                 debug_mode=True):
     """Creates an agent.
 
     Args:
@@ -185,7 +185,6 @@ class Runner(object):
         self._base_dir = base_dir
         self._create_directories()
         self._summary_writer = tf.summary.FileWriter(self._base_dir)
-
         self._environment = create_environment_fn()
         # Set up a session and initialize variables.
         self._sess = tf.Session('',
@@ -533,6 +532,7 @@ class TrainRunner(Runner):
     def _save_tensorboard_summaries(self, iteration, num_episodes,
                                     average_reward):
         """Save statistics as tensorboard summaries."""
+        print("=================================================================")
         summary = tf.Summary(value=[
             tf.Summary.Value(tag='Train/NumEpisodes',
                              simple_value=num_episodes),
