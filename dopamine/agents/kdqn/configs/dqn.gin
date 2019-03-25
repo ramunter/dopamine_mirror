@@ -7,6 +7,7 @@ import dopamine.agents.kdqn.kdqn_agent
 import dopamine.replay_memory.circular_replay_buffer
 import gin.tf.external_configurables
 
+KDQNAgent.network = @atari_lib.bayesian_dqn_network
 KDQNAgent.gamma = 0.99
 KDQNAgent.update_horizon = 1
 KDQNAgent.min_replay_history = 20000  # agent steps
