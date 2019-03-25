@@ -94,14 +94,40 @@ def _basic_discrete_domain_network(min_vals, max_vals, num_actions, state,
     net /= max_vals - min_vals
     net = 2.0 * net - 1.0  # Rescale in range [-1, 1].
     net = slim.fully_connected(net, 512)
-    net = slim.fully_connected(net, 512)
+    net = slim.fully_connected(net, 24)
     if num_atoms is None:
         # We are constructing a DQN-style network.
-        return net, slim.fully_connected(net, num_actions, activation_fn=None)
+        return slim.fully_connected(net, num_actions, activation_fn=None)
     else:
         # We are constructing a rainbow-style network.
         return slim.fully_connected(net, num_actions * num_atoms,
                                     activation_fn=None)
+
+
+@gin.configurable
+def _bayesian_discrete_domain_network(min_vals, max_vals, num_actions, state):
+    """Builds a basic network for discrete domains, rescaling inputs to [-1, 1].
+
+    Args:
+      min_vals: float, minimum attainable values (must be same shape as `state`).
+      max_vals: float, maximum attainable values (must be same shape as `state`).
+      num_actions: int, number of actions.
+      state: `tf.Tensor`, the state input.
+      num_atoms: int or None, if None will construct a DQN-style network,
+        otherwise will construct a Rainbow-style network.
+
+    Returns:
+      The Q-values for DQN-style agents or logits for Rainbow-style agents.
+    """
+    net = tf.cast(state, tf.float32)
+    net = slim.flatten(net)
+    net -= min_vals
+    net /= max_vals - min_vals
+    net = 2.0 * net - 1.0  # Rescale in range [-1, 1].
+    net = slim.fully_connected(net, 512)
+    net = slim.fully_connected(net, 128)
+    # We are constructing a DQN-style network.
+    return net, slim.fully_connected(net, num_actions, activation_fn=None)
 
 
 @gin.configurable
@@ -118,7 +144,7 @@ def cartpole_bdqn_network(num_actions, network_type, state):
     Returns:
       net: _network_type object containing the tensors output by the network.
     """
-    net, q_values = _basic_discrete_domain_network(
+    net, q_values = _bayesian_discrete_domain_network(
         CARTPOLE_MIN_VALS, CARTPOLE_MAX_VALS, num_actions, state)
     return network_type(q_values, net)
 
