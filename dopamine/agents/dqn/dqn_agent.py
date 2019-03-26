@@ -246,11 +246,12 @@ class DQNAgent(object):
         # TODO(bellemare): Ties should be broken. They are unlikely to happen when
         # using a deep network, but may affect performance with a linear
         # approximation scheme.
-        self._q_argmax = tf.argmax(self._net_outputs.q_values, axis=1)[0]
-
-        self._replay_net_outputs = self.online_convnet(self._replay.states)
-        self._replay_next_target_net_outputs = self.target_convnet(
-            self._replay.next_states)
+        with tf.variable_scope('Online_Actions'):
+            self._q_argmax = tf.argmax(self._net_outputs.q_values, axis=1)[0]
+        with tf.variable_scope('Replay'):
+            self._replay_net_outputs = self.online_convnet(self._replay.states)
+            self._replay_next_target_net_outputs = self.target_convnet(
+                self._replay.next_states)
 
     def _build_replay_buffer(self, use_staging):
         """Creates the replay buffer used by the agent.
