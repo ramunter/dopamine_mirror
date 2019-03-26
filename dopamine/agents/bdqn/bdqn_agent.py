@@ -198,14 +198,14 @@ class BDQNAgent():
         with tf.variable_scope("action"+str(action)):
             mu = tf.get_variable("prior_mean", initializer=tf.cast(
                 np.zeros((size, 1)), dtype=tf.float32))
-            cov = tf.get_variable("prior_cov", initializer=tf.cast(
+            inv_cov = tf.get_variable("prior_invcov", initializer=tf.cast(
                 np.eye(size), dtype=tf.float32))
             b = tf.get_variable(
-                "prior_b", initializer=tf.cast(1.0, dtype=tf.float32))
+                "prior_b", initializer=tf.cast(1, dtype=tf.float32))
             a = tf.get_variable(
-                "prior_a", initializer=tf.cast(1.0, dtype=tf.float32))
+                "prior_a", initializer=tf.cast(1, dtype=tf.float32))
 
-            prior = Prior(mu, cov, a, b)
+            prior = Prior(mu, inv_cov, a, b)
         return prior
 
     def _sample_op_template(self, action, encoding):
@@ -215,8 +215,8 @@ class BDQNAgent():
         var_dist = tfd.InverseGamma(
             concentration=prior.a, rate=prior.b)
         var_sample = var_dist.sample(1)
-
-        tril = tf.linalg.inv(tf.cholesky(prior.inv_cov))  # *var_sample
+        tril = tf.linalg.inv(tf.cholesky(prior.inv_cov))
+        #tril = tf.linalg.inv(tf.cholesky((1/var_sample)*prior.inv_cov))
         coef_dist = tfd.MultivariateNormalTriL(
             loc=tf.reshape(prior.mean, [-1]), scale_tril=tril)
 
@@ -237,7 +237,7 @@ class BDQNAgent():
           self.target_convnet: For computing the next state's target Q-values.
           self._q_argmax: The action maximizing the current state's Q-values.
           self._replay_net_output: The replayed states' Q-values.
-          self._next_replay_net_output: The replayed next states' target
+          self._next_replay_target_net_output: The replayed next states' target
             Q-values (see Mnih et al., 2015 for details).
         """
         # Calling online_convnet will generate a new graph as defined in
@@ -267,19 +267,21 @@ class BDQNAgent():
         # Replay Setup
         with tf.variable_scope('Replay'):
             self._replay_net_output = self.online_convnet(self._replay.states)
-            self._next_replay_net_output = self.target_convnet(
+            self._replay_target_net_output = self.target_convnet(
+                self._replay.states)
+            self._next_replay_target_net_output = self.target_convnet(
                 self._replay.next_states)
 
             self._replay_q_argmax = tf.argmax(
                 self.samples_per_action(sampler, self._replay_net_output.encoding), axis=0)
             self._next_replay_q_max = tf.reduce_max(
-                self.samples_per_action(sampler, self._next_replay_net_output.encoding), axis=0)
+                self.samples_per_action(sampler, self._next_replay_target_net_output.encoding), axis=0)
 
     def samples_per_action(self, sampler, encoding):
         return tf.stack([sampler(action, encoding) for action in range(0, self.num_actions)])
 
     def _build_update_priors_op(self):
-        # Split
+
         updates = [0]*self.num_actions
         for action in range(0, self.num_actions):
             with tf.variable_scope('masked_target'):
@@ -288,7 +290,7 @@ class BDQNAgent():
                 terminals = tf.boolean_mask(
                     self._replay.terminals, boolean_mask)
                 state_q_encoding = tf.boolean_mask(
-                    self._replay_net_output.encoding, boolean_mask)
+                    self._replay_target_net_output.encoding, boolean_mask)
                 _next_replay_q_max = tf.boolean_mask(
                     self._next_replay_q_max, boolean_mask)
 
@@ -299,17 +301,9 @@ class BDQNAgent():
                 self._priors[action], state_q_encoding, target)
 
             tf.summary.scalar(str(action),
-                              self._priors[action].b,
-                              family="Beta")
-
-            tf.summary.scalar(str(action),
-                              self._priors[action].a,
-                              family="Alpha")
-
-            tf.summary.scalar(str(action),
                               self._priors[action].b /
                               (self._priors[action].a - 1),
-                              family="Mean noise")
+                              family="mean_noise")
 
         return updates
 
@@ -320,12 +314,10 @@ class BDQNAgent():
 
             target = tf.reshape(target, [-1, 1], name="target")
 
-            cov = tf.linalg.inv(prior.inv_cov, name="inv_cov")
-
-            update_mu = tf.linalg.inv(xTx + prior.inv_cov)@\
-                (xT@target + prior.inv_cov@prior.mean)
-
             update_inv_cov = xTx + prior.inv_cov
+
+            update_mu = tf.linalg.inv(update_inv_cov)@\
+                (xT@target + prior.inv_cov@prior.mean)
 
             update_a = prior.a + tf.cast(tf.size(target)/2, tf.float32)
 
@@ -333,6 +325,12 @@ class BDQNAgent():
                 tf.squeeze(tf.transpose(target)@target +
                            tf.transpose(prior.mean)@prior.inv_cov@prior.mean -
                            tf.transpose(update_mu)@update_inv_cov@update_mu)
+
+            tf.summary.scalar("mean",
+                              tf.reduce_mean(prior.mean))
+
+            tf.summary.scalar("cov",
+                              tf.reduce_mean(tf.linalg.inv(prior.inv_cov)))
 
             update = Prior(prior.mean.assign(update_mu),
                            prior.inv_cov.assign(update_inv_cov),
@@ -349,7 +347,7 @@ class BDQNAgent():
         """
         # Get the maximum Q-value across the actions dimension.
         replay_next_qt_max = tf.reduce_max(
-            self._next_replay_net_output.q_values, 1)
+            self._next_replay_target_net_output.q_values, 1)
         return self._replay.rewards + self.cumulative_gamma * replay_next_qt_max * (
             1. - tf.cast(self._replay.terminals, tf.float32))
 
@@ -456,7 +454,6 @@ class BDQNAgent():
         """
         if self.eval_mode:
             return self._sess.run(self._q_argmax, {self.state_ph: self.state})
-
         return np.asscalar(self._sess.run(self._q_sample_argmax, {self.state_ph: self.state}))
 
     def _train_step(self):
