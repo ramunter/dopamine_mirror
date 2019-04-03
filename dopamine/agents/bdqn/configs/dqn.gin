@@ -4,6 +4,7 @@
 import dopamine.discrete_domains.atari_lib
 import dopamine.discrete_domains.run_experiment
 import dopamine.agents.bdqn.bdqn_agent
+import dopamine.agents.bdqn.simple_bdqn_agent
 import dopamine.replay_memory.circular_replay_buffer
 import gin.tf.external_configurables
 
@@ -24,11 +25,20 @@ tf.train.RMSPropOptimizer.centered = True
 atari_lib.create_atari_environment.game_name = 'Pong'
 # Sticky actions with probability 0.25, as suggested by (Machado et al., 2017).
 atari_lib.create_atari_environment.sticky_actions = True
-create_agent.agent_name = 'bdqn'
+create_agent.agent_name = 'simple_bdqn'
 Runner.num_iterations = 20
 Runner.training_steps = 250000  # agent steps
-Runner.evaluation_steps = 125000  # agent steps
+Runner.evaluation_steps = 50000  # agent steps
 Runner.max_steps_per_episode = 27000  # agent steps
 
 WrappedReplayBuffer.replay_capacity = 1000000
 WrappedReplayBuffer.batch_size = 32
+
+SimpleBDQNAgent.gamma = 0.99
+SimpleBDQNAgent.update_horizon = 1
+SimpleBDQNAgent.min_replay_history = 50000
+SimpleBDQNAgent.update_period = 4
+SimpleBDQNAgent.target_update_period = 10000
+SimpleBDQNAgent.sample_weight_period = 1000
+SimpleBDQNAgent.tf_device = '/gpu:0'  # use '/cpu:*' for non-GPU version
+SimpleBDQNAgent.optimizer = @tf.train.AdamOptimizer()

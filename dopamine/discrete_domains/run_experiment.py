@@ -23,7 +23,7 @@ import sys
 import time
 
 from dopamine.agents.dqn import dqn_agent
-from dopamine.agents.bdqn import bdqn_agent
+from dopamine.agents.bdqn import bdqn_agent, simple_bdqn_agent
 from dopamine.agents.kdqn import kdqn_agent
 
 from dopamine.agents.implicit_quantile import implicit_quantile_agent
@@ -91,7 +91,10 @@ def create_agent(sess, environment, agent_name=None, summary_writer=None,
     elif agent_name == 'bdqn':
         return bdqn_agent.BDQNAgent(sess, num_actions=environment.action_space.n,
                                     summary_writer=summary_writer)
-    if agent_name == 'kdqn':
+    elif agent_name == 'simple_bdqn':
+        return simple_bdqn_agent.SimpleBDQNAgent(sess, num_actions=environment.action_space.n,
+                                                 summary_writer=summary_writer)
+    elif agent_name == 'kdqn':
         return kdqn_agent.KDQNAgent(sess, num_actions=environment.action_space.n,
                                     summary_writer=summary_writer)
     else:

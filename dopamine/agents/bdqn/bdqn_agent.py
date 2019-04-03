@@ -138,8 +138,13 @@ class BDQNAgent(dqn_agent.DQNAgent):
 
         self._build_bayes_network()
         self._update_bayes_op = self._build_update_bayes_op()
+
+        self._train_op = self._rebuild_train_op()
         if self.summary_writer is not None:
             self._merged_summaries = tf.summary.merge_all()
+
+        print("===========")
+        print(self._replay.memory._batch_size)
 
     def _get_network_type(self):
         """Returns the type of the outputs of a BDQN value network.
@@ -152,11 +157,11 @@ class BDQNAgent(dqn_agent.DQNAgent):
         mu = tf.get_variable("dist_mean"+str(action), initializer=tf.cast(
             np.zeros((size, 1)), dtype=tf.float32))
         inv_cov = tf.get_variable("dist_invcov"+str(action), initializer=tf.cast(
-            np.eye(size)*10000, dtype=tf.float32))
+            np.eye(size)*10, dtype=tf.float32))
         b = tf.get_variable(
-            "dist_b"+str(action), initializer=tf.cast(0.001, dtype=tf.float32))
+            "dist_b"+str(action), initializer=tf.cast(0.1, dtype=tf.float32))
         a = tf.get_variable(
-            "dist_a"+str(action), initializer=tf.cast(1000, dtype=tf.float32))
+            "dist_a"+str(action), initializer=tf.cast(10, dtype=tf.float32))
         dist = Dist(mu, inv_cov, a, b)
         return dist
 
@@ -241,8 +246,18 @@ class BDQNAgent(dqn_agent.DQNAgent):
                 self._parameters[action].noise)).sample(1)
         return tf.squeeze(sample)
 
+    def bayesian_average(self, action, encoding):
+        sample = encoding@tf.transpose(
+            self._parameters[action].coef) + \
+            tfd.Normal(loc=0, scale=tf.sqrt(
+                self._parameters[action].noise)).sample(1)
+        return tf.squeeze(sample)
+
     def samples_per_action(self, encoding):
         return tf.stack([self.bayesian_output(action, encoding) for action in range(0, self.num_actions)])
+
+    def averages_per_action(self, encoding):
+        return tf.stack([self.bayesian_average(action, encoding) for action in range(0, self.num_actions)], axis=1)
 
     def _build_update_bayes_op(self):
 
@@ -255,8 +270,12 @@ class BDQNAgent(dqn_agent.DQNAgent):
                     self._replay.terminals, boolean_mask)
                 state_q_encoding = tf.boolean_mask(
                     self._replay_target_net_outputs.encoding, boolean_mask)
-                _next_replay_q_max = tf.boolean_mask(
-                    self._sample_replay_next_q_max, boolean_mask)
+                next_state_q_encoding = tf.boolean_mask(
+                    self._replay_next_target_net_outputs.encoding, boolean_mask)
+                _next_replay_q_max = tf.reduce_max(
+                    self.averages_per_action(next_state_q_encoding))
+
+                print("NEXT replay q _max is ", _next_replay_q_max.get_shape())
 
                 target = rewards + self.cumulative_gamma * \
                     _next_replay_q_max * \
@@ -271,6 +290,28 @@ class BDQNAgent(dqn_agent.DQNAgent):
                                   family="mean_noise")
 
         return updates
+
+    def _rebuild_train_op(self):
+        """Reuilds the training op.
+
+        Returns:
+          train_op: An op performing one step of training from replay data.
+        """
+        replay_action_one_hot = tf.one_hot(
+            self._replay.actions, self.num_actions, 1., 0., name='action_one_hot')
+        replay_chosen_q = tf.reduce_sum(
+            self.averages_per_action(
+                self._replay_next_target_net_outputs.encoding) * replay_action_one_hot,
+            reduction_indices=1,
+            name='replay_chosen_q')
+
+        target = tf.stop_gradient(self._build_target_q_op())
+        loss = tf.losses.huber_loss(
+            target, replay_chosen_q, reduction=tf.losses.Reduction.NONE)
+        if self.summary_writer is not None:
+            with tf.variable_scope('Losses'):
+                tf.summary.scalar('HuberLoss', tf.reduce_mean(loss))
+        return self.optimizer.minimize(tf.reduce_mean(loss))
 
     def _update_single_dist_op(self, dist, encoding, target):
         with tf.variable_scope('dist_update'):
@@ -318,7 +359,6 @@ class BDQNAgent(dqn_agent.DQNAgent):
         # params = self._sess.run(self._parameters)
         # print("\nMean Action 1\n", np.sum(params[0].coef))
         # print("Mean Action 2\n", np.sum(params[1].coef))
-
         return super().begin_episode(observation)
 
     def _select_action(self):
@@ -336,10 +376,8 @@ class BDQNAgent(dqn_agent.DQNAgent):
         #     else:
         #         # Choose the action with highest Q-value at the current state.
         self._sess.run(self._sample_coef_op)
-
         action, q_values = self._sess.run([self._q_argmax, self._q_values], {
             self.state_ph: self.state})
-        print(q_values)
         return action
 
     # def _select_action(self):
@@ -398,7 +436,7 @@ class BDQNAgent(dqn_agent.DQNAgent):
 
             if self.training_steps % self._bayes_update_period == 0:
                 self._sess.run(self._reset_priors_op)
-                for _ in range(0, 10):
+                for _ in range(0, 20):
                     self._sess.run(self._update_bayes_op)
 
                 # dists = self._sess.run(self._dists)
