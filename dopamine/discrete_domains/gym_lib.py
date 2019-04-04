@@ -128,7 +128,7 @@ def _bayesian_discrete_domain_network(min_vals, max_vals, num_actions, state):
     net = slim.fully_connected(net, 512)
 
     # We are constructing a DQN-style network.
-    return net, slim.fully_connected(net, num_actions, activation_fn=None)
+    return net#, slim.fully_connected(net, num_actions, activation_fn=None)
 
 
 @gin.configurable
@@ -145,9 +145,9 @@ def cartpole_bdqn_network(num_actions, network_type, state):
     Returns:
       net: _network_type object containing the tensors output by the network.
     """
-    net, q_values = _bayesian_discrete_domain_network(
+    net = _bayesian_discrete_domain_network(
         CARTPOLE_MIN_VALS, CARTPOLE_MAX_VALS, num_actions, state)
-    return network_type(q_values, net)
+    return network_type(net)
 
 
 @gin.configurable

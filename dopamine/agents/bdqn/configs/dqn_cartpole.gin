@@ -19,7 +19,7 @@ BDQNAgent.target_update_period = 100
 BDQNAgent.tf_device = '/gpu:0'  # use '/cpu:*' for non-GPU version
 BDQNAgent.optimizer = @tf.train.AdamOptimizer()
 
-tf.train.AdamOptimizer.learning_rate = 0.0001
+tf.train.AdamOptimizer.learning_rate = 0.001
 tf.train.AdamOptimizer.epsilon = 0.0003125
 
 create_gym_environment.environment_name = 'CartPole'
@@ -42,7 +42,6 @@ SimpleBDQNAgent.gamma = 0.99
 SimpleBDQNAgent.update_horizon = 1
 SimpleBDQNAgent.min_replay_history = 500
 SimpleBDQNAgent.update_period = 4
-SimpleBDQNAgent.target_update_period = 1000
-SimpleBDQNAgent.sample_weight_period = 1000
-SimpleBDQNAgent.tf_device = '/gpu:0'  # use '/cpu:*' for non-GPU version
+SimpleBDQNAgent.target_update_period = 100
+SimpleBDQNAgent.tf_device = '/cpu:*'  # use '/cpu:*' for non-GPU version
 SimpleBDQNAgent.optimizer = @tf.train.AdamOptimizer()

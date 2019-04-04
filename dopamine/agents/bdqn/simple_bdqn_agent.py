@@ -70,7 +70,7 @@ class SimpleBDQNAgent(object):
                      centered=True),
                  summary_writer=None,
                  summary_writing_frequency=4,
-                 coef_var=100,
+                 coef_var=10000,
                  noise_var=1):
         """Initializes the agent and constructs the components of its graph.
 
@@ -181,7 +181,7 @@ class SimpleBDQNAgent(object):
         cov = np.zeros(
             (self.num_actions, self.encoding_size, self.encoding_size))
         for i in range(self.num_actions):
-            cov[i, :, :] = np.eye(self.encoding_size)
+            cov[i, :, :] = np.eye(self.encoding_size)*self.coef_var
         return tf.cast(cov, dtype=tf.float32)
 
     @property
@@ -208,7 +208,7 @@ class SimpleBDQNAgent(object):
         Returns:
           net_type: _network_type object defining the outputs of the network.
         """
-        return collections.namedtuple('BDQN_network', ['q_values', 'encoding', ])
+        return collections.namedtuple('BDQN_network', ['encoding'])
 
     def _network_template(self, state):
         """Builds the convolutional network used to compute the agent's Q-values.
@@ -343,13 +343,14 @@ class SimpleBDQNAgent(object):
         phiY = self.phiY[action, :, None] + \
             tf.matmul(encoding, target, transpose_a=True)
 
-        identity = tf.eye(int(self.encoding_size))
+        inv_cov = phiphiT + \
+            tf.linalg.inv(self.cov[action,:,:])
+        cov = self.noise_var*tf.linalg.inv(inv_cov)
 
-        cov = tf.linalg.inv(phiphiT/self.noise_var + 1/self.coef_var*identity)
-
-        mean = cov@phiY/self.noise_var
+        mean = cov@(phiY+inv_cov@self.mean[action,:,None])
 
         cov_decomp = tf.linalg.cholesky((cov+tf.transpose(cov))/2.)
+
         update = [tf.assign(self.phiphiT[action, :, :], phiphiT),
                   tf.assign(self.phiY[action, :], tf.squeeze(phiY)),
                   tf.assign(self.mean[action, :], tf.squeeze(mean)),
@@ -405,14 +406,9 @@ class SimpleBDQNAgent(object):
                        transpose_b=True)
 
         tf.summary.scalar("reg0", tf.reduce_mean(
-            qt, axis=0)[0], family="q-values")
+            qt, axis=1)[0], family="q-values")
         tf.summary.scalar("reg1", tf.reduce_mean(
-            qt, axis=0)[1], family="q-values")
-
-        tf.summary.scalar("net0", tf.reduce_mean(
-            self._replay_next_target_net_outputs.q_values[0]), family="q-values")
-        tf.summary.scalar("net1", tf.reduce_mean(
-            self._replay_next_target_net_outputs.q_values[1]), family="q-values")
+            qt, axis=1)[1], family="q-values")
 
         # Calculate the Bellman target value.
         #   Q_t = R_t + \gamma^N * Q'_t+1
@@ -439,6 +435,11 @@ class SimpleBDQNAgent(object):
             name='replay_chosen_q')
 
         target = tf.stop_gradient(self._build_target_q_op())
+        
+
+        tf.summary.scalar("Target", target[0], family="Losses")
+        tf.summary.scalar("Estimate", replay_chosen_q[0], family="Losses")
+
         loss = tf.losses.huber_loss(
             target, replay_chosen_q, reduction=tf.losses.Reduction.NONE)
         if self.summary_writer is not None:
