@@ -40,6 +40,7 @@ NATURE_DQN_DTYPE = atari_lib.NATURE_DQN_DTYPE
 NATURE_DQN_STACK_SIZE = atari_lib.NATURE_DQN_STACK_SIZE
 nature_bdqn_network = atari_lib.bayesian_dqn_network
 
+np.set_printoptions(precision=3)
 
 @gin.configurable
 class SimpleBDQNAgent(object):
@@ -69,7 +70,7 @@ class SimpleBDQNAgent(object):
                      centered=True),
                  summary_writer=None,
                  summary_writing_frequency=4,
-                 coef_var=0.001,
+                 coef_var=100,
                  noise_var=1):
         """Initializes the agent and constructs the components of its graph.
 
@@ -284,8 +285,8 @@ class SimpleBDQNAgent(object):
     def build_sample_weights_op(self):
         samples = []
         for a in range(self.num_actions):
-            samples.append(tf.squeeze(tfd.MultivariateNormalFullCovariance(
-                loc=self.mean[a, :], covariance_matrix=self.cov[a, :, :]+tf.eye(int(self.encoding_size))*1e-6).sample(1)))
+            samples.append(tf.squeeze(
+                self.mean[a, :, None] + self.cov_decomp[a,:,:]@tfd.Normal(loc=0, scale=1).sample((self.encoding_size,1))))
 
         tf.summary.scalar("0", tf.reduce_mean(samples[0]), family="weights")
         tf.summary.scalar("1", tf.reduce_mean(samples[1]), family="weights")
@@ -348,10 +349,12 @@ class SimpleBDQNAgent(object):
 
         mean = cov@phiY/self.noise_var
 
+        cov_decomp = tf.linalg.cholesky((cov+tf.transpose(cov))/2.)
         update = [tf.assign(self.phiphiT[action, :, :], phiphiT),
                   tf.assign(self.phiY[action, :], tf.squeeze(phiY)),
                   tf.assign(self.mean[action, :], tf.squeeze(mean)),
-                  tf.assign(self.cov[action, :, :], cov)]
+                  tf.assign(self.cov[action, :, :], cov),
+                  tf.assign(self.cov_decomp[action, :, :], cov_decomp)]
 
         tf.summary.scalar(str(action), tf.reduce_mean(mean), family="mean")
         tf.summary.scalar(str(action), tf.reduce_mean(cov), family="cov")
@@ -471,6 +474,7 @@ class SimpleBDQNAgent(object):
         """
         self._reset_state()
         self._record_observation(observation)
+        self._sess.run(self.sample_weights_op)
 
         if not self.eval_mode:
             self._train_step()
@@ -561,8 +565,12 @@ class SimpleBDQNAgent(object):
                 for _ in range(training_iterations):
                     self._sess.run(self.bayes_reg_op)
 
-        if self.training_steps % self.sample_weight_period == 0:
-            self._sess.run(self.sample_weights_op)
+        # if self.training_steps % self.sample_weight_period == 0:
+        #     # cov = self._sess.run(self.cov)
+        #     # for a in range(self.num_actions):
+        #     #     print((cov[a, :,:]))
+        #     #     np.linalg.cholesky(cov[a,:,:])            
+        #     self._sess.run(self.sample_weights_op)
 
         self.training_steps += 1
 
