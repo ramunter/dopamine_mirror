@@ -69,8 +69,8 @@ class SimpleBDQNAgent(object):
                      epsilon=0.00001,
                      centered=True),
                  summary_writer=None,
-                 summary_writing_frequency=4,
-                 coef_var=10000,
+                 summary_writing_frequency=1,
+                 coef_var=0.01,
                  noise_var=1):
         """Initializes the agent and constructs the components of its graph.
 
@@ -216,8 +216,11 @@ class SimpleBDQNAgent(object):
         Args:
         state: `tf.Tensor`, contains the agent's current state.
 
+                value=self.cov_decomp_initializer, validate_shape=True))
         Returns:
+                value=self.cov_decomp_initializer, validate_shape=True))
         net: _network_type object containing the tensors output by the network.
+                value=self.cov_decomp_initializer, validate_shape=True))
         """
         return self.network(self.num_actions, self._get_network_type(), state)
 
@@ -248,31 +251,33 @@ class SimpleBDQNAgent(object):
         # Build bayes reg variables
 
         self.encoding_size = self._net_outputs.encoding.get_shape()[1]
+
+
         self.mean = tf.get_variable(
-            "mean", initializer=self.mean_initializer, trainable=False)
+            "parameters/mean", initializer=self.mean_initializer, trainable=False)
         self.weight_samples = tf.get_variable(
-            "weight_samples", initializer=self.weights_initializer, trainable=False)
+            "parameters/weight_samples", initializer=self.weights_initializer, trainable=False)
         self.cov = tf.get_variable(
-            "cov", initializer=self.cov_initializer, trainable=False)
+            "parameters/cov", initializer=self.cov_initializer, trainable=False)
         self.cov_decomp = tf.get_variable(
-            "cov_decomp", initializer=self.cov_decomp_initializer, trainable=False)
+            "parameters/cov_decomp", initializer=self.cov_decomp_initializer, trainable=False)
         self.phiphiT = tf.get_variable(
-            "phiphiT", initializer=self.phiphiT_initializer, trainable=False)
+            "parameters/phiphiT", initializer=self.phiphiT_initializer, trainable=False)
         self.phiY = tf.get_variable(
-            "phiY", initializer=self.phiY_initializer, trainable=False)
+            "parameters/phiY", initializer=self.phiY_initializer, trainable=False)
 
         self.reset_priors_op = self.build_reset_priors_op()
         self.sample_weights_op = self.build_sample_weights_op()
 
         self._q_argmax = tf.argmax(
             tf.matmul(self.mean, self._net_outputs.encoding,
-                      transpose_b=True))[0]
+                      transpose_b=True), name="Mean_Q")[0]
         self._sample_q_argmax = tf.argmax(
             tf.matmul(self.weight_samples,
                       self._net_outputs.encoding, transpose_b=True)# +
             # tfd.MultivariateNormalDiag(
             #     loc=[0], scale_diag=[self.noise_var]).sample(self.num_actions)
-        )[0]
+        , name="Sample_Q")[0]
 
         self._replay_net_outputs = self.online_convnet(self._replay.states)
         self._replay_next_target_net_outputs = self.target_convnet(
@@ -283,59 +288,56 @@ class SimpleBDQNAgent(object):
         self.bayes_reg_op = self.build_bayes_reg_op()
 
     def build_sample_weights_op(self):
-        samples = []
-        for a in range(self.num_actions):
-            samples.append(tf.squeeze(
-                self.mean[a, :, None] + self.cov_decomp[a,:,:]@tfd.Normal(loc=0, scale=1).sample((self.encoding_size,1))))
+        with tf.name_scope("Sample_Weights"):
+            samples = []
+            for a in range(self.num_actions):
+                samples.append(tf.squeeze(
+                    self.mean[a, :, None] + self.cov_decomp[a,:,:]@tfd.Normal(loc=0, scale=1).sample((self.encoding_size,1))))
 
-        tf.summary.scalar("0", tf.reduce_mean(samples[0]), family="weights")
-        tf.summary.scalar("1", tf.reduce_mean(samples[1]), family="weights")
-
-        weight_samples = tf.stack(samples, axis=0)
-        return tf.assign(self.weight_samples, weight_samples, validate_shape=True)
+            weight_samples = tf.stack(samples, axis=0)
+            return tf.assign(self.weight_samples, weight_samples, validate_shape=True)
 
     def build_reset_priors_op(self):
-        priors = []
-        priors.append(
-            tf.assign(self.mean, value=self.mean_initializer, validate_shape=True))
-        priors.append(tf.assign(self.weight_samples,
-                                value=self.weights_initializer, validate_shape=True))
-        priors.append(
-            tf.assign(self.cov, value=self.cov_initializer, validate_shape=True))
-        priors.append(tf.assign(self.cov_decomp,
-                                value=self.cov_decomp_initializer, validate_shape=True))
-        priors.append(
-            tf.assign(self.phiphiT, value=self.phiphiT_initializer, validate_shape=True))
-        priors.append(
-            tf.assign(self.phiY, value=self.phiY_initializer, validate_shape=True))
-        return priors
+        with tf.name_scope("Reset_Priors"):
+            priors = []
+            priors.append(
+                tf.assign(self.mean, value=self.mean_initializer, validate_shape=True))
+            priors.append(
+                tf.assign(self.cov, value=self.cov_initializer, validate_shape=True))
+            priors.append(tf.assign(self.cov_decomp,
+                                    value=self.cov_decomp_initializer, validate_shape=True))
+            priors.append(
+                tf.assign(self.phiphiT, value=self.phiphiT_initializer, validate_shape=True))
+            priors.append(
+                tf.assign(self.phiY, value=self.phiY_initializer, validate_shape=True))
+            return priors
 
     def build_bayes_reg_op(self):
+        with tf.name_scope("Bayes_Reg"):
 
-        updates = [0]*self.num_actions
-        for action in range(0, self.num_actions):
-            boolean_mask = tf.equal(self._replay.actions, action)
-            rewards = tf.boolean_mask(self._replay.rewards, boolean_mask)
-            terminals = tf.boolean_mask(self._replay.terminals, boolean_mask)
-            state_q_encoding = tf.boolean_mask(
-                self._replay_net_outputs.encoding, boolean_mask)
-            next_state_q_encoding = tf.boolean_mask(
-                self._replay_next_target_net_outputs.encoding, boolean_mask)
+            updates = [0]*self.num_actions
+            for action in range(0, self.num_actions):
+                boolean_mask = tf.equal(self._replay.actions, action)
+                rewards = tf.boolean_mask(self._replay.rewards, boolean_mask)
+                terminals = tf.boolean_mask(self._replay.terminals, boolean_mask)
+                state_q_encoding = tf.boolean_mask(
+                    self._replay_net_outputs.encoding, boolean_mask)
+                next_state_q_encoding = tf.boolean_mask(
+                    self._replay_next_target_net_outputs.encoding, boolean_mask)
 
-            max_q = tf.reduce_max(
-                tf.matmul(self.mean, next_state_q_encoding,
-                      transpose_b=True))
+                max_q = tf.reduce_max(
+                    tf.matmul(self.mean, next_state_q_encoding,
+                        transpose_b=True))
 
-            target = rewards + self.cumulative_gamma * \
-                max_q * (1. - tf.cast(terminals, tf.float32))
+                target = rewards + self.cumulative_gamma * \
+                    max_q * (1. - tf.cast(terminals, tf.float32))
 
-            updates[action] = self._update_single_prior_op(
-                action, state_q_encoding, target)
+                updates[action] = self._update_single_prior_op(
+                    action, state_q_encoding, target)
 
-        return updates
+            return updates
 
     def _update_single_prior_op(self, action, encoding, target):
-
         target = tf.reshape(target, [-1, 1], name="target")
         phiphiT = self.phiphiT[action, :, :] + \
             tf.matmul(encoding, encoding, transpose_a=True)
@@ -356,9 +358,6 @@ class SimpleBDQNAgent(object):
                   tf.assign(self.mean[action, :], tf.squeeze(mean)),
                   tf.assign(self.cov[action, :, :], cov),
                   tf.assign(self.cov_decomp[action, :, :], cov_decomp)]
-
-        tf.summary.scalar(str(action), tf.reduce_mean(mean), family="mean")
-        tf.summary.scalar(str(action), tf.reduce_mean(cov), family="cov")
 
         return update
 
@@ -390,35 +389,38 @@ class SimpleBDQNAgent(object):
         # replay_next_qt_max = tf.reduce_max(
         #               self._replay_next_target_net_outputs.q_values,
         #     axis=1)
+        with tf.name_scope("Calc_Target"):
 
-        replay_next_q_argmax = tf.one_hot(
-            tf.argmax(tf.matmul(
-                self.weight_samples, self._replay_next_net_outputs.encoding, transpose_b=True)), self.num_actions, name="argmax_next_q")
+            replay_next_q_argmax = tf.one_hot(
+                tf.argmax(tf.matmul(
+                    self.weight_samples, self._replay_next_net_outputs.encoding, transpose_b=True)), self.num_actions, name="argmax_next_q")
 
-        replay_next_qt_max = tf.reduce_sum(
-            tf.transpose(tf.matmul(self.mean, self._replay_next_target_net_outputs.encoding,
-                                   transpose_b=True)) * replay_next_q_argmax,
-            reduction_indices=1,
-            name='qt_max')
+            replay_next_qt_max = tf.reduce_sum(
+                tf.transpose(tf.matmul(self.mean, self._replay_next_target_net_outputs.encoding,
+                                    transpose_b=True)) * replay_next_q_argmax,
+                reduction_indices=1,
+                name='qt_max')
 
-        qt = tf.matmul(self.mean,
-                       self._replay_next_target_net_outputs.encoding,
-                       transpose_b=True)
+            qt = tf.matmul(self.mean,
+                        self._replay_next_target_net_outputs.encoding,
+                        transpose_b=True)
 
-        tf.summary.scalar("reg0", tf.reduce_mean(
-            qt, axis=1)[0], family="q-values")
-        tf.summary.scalar("reg1", tf.reduce_mean(
-            qt, axis=1)[1], family="q-values")
+            qs = tf.matmul(self.weight_samples,
+                        self._replay_next_target_net_outputs.encoding,
+                        transpose_b=True)
 
-        # Calculate the Bellman target value.
-        #   Q_t = R_t + \gamma^N * Q'_t+1
-        # where,
-        #   Q'_t+1 = \argmax_a Q(S_t+1, a)
-        #          (or) 0 if S_t is a terminal state,
-        # and
-        #   N is the update horizon (by default, N=1).
-        return self._replay.rewards + self.cumulative_gamma * replay_next_qt_max * (
-            1. - tf.cast(self._replay.terminals, tf.float32))
+            tf.summary.scalar("mean", tf.reduce_mean(
+                qt, axis=1)[0], family="q-values0")
+            tf.summary.scalar("mean", tf.reduce_mean(
+                qt, axis=1)[1], family="q-values1")
+
+            tf.summary.scalar("sample", tf.reduce_mean(
+                qs, axis=1)[0], family="q-values0")
+            tf.summary.scalar("sample", tf.reduce_mean(
+                qs, axis=1)[1], family="q-values1")
+
+            return self._replay.rewards + self.cumulative_gamma * replay_next_qt_max * (
+                1. - tf.cast(self._replay.terminals, tf.float32))
 
     def _build_train_op(self):
         """Builds a training op.
@@ -426,26 +428,29 @@ class SimpleBDQNAgent(object):
         Returns:
         train_op: An op performing one step of training from replay data.
         """
-        replay_action_one_hot = tf.one_hot(
-            self._replay.actions, self.num_actions, 1., 0., name='action_one_hot')
-        replay_chosen_q = tf.reduce_sum(
-            tf.transpose(tf.matmul(self.mean, self._replay_net_outputs.encoding,
-                                   transpose_b=True)) * replay_action_one_hot,
-            reduction_indices=1,
-            name='replay_chosen_q')
 
         target = tf.stop_gradient(self._build_target_q_op())
+
+        with tf.name_scope("Loss"):
         
+            replay_action_one_hot = tf.one_hot(
+                self._replay.actions, self.num_actions, 1., 0., name='action_one_hot')
+            replay_chosen_q = tf.reduce_sum(
+                tf.transpose(tf.matmul(self.mean, self._replay_net_outputs.encoding,
+                                    transpose_b=True)) * replay_action_one_hot,
+                reduction_indices=1,
+                name='replay_chosen_q')
 
-        tf.summary.scalar("Target", target[0], family="Losses")
-        tf.summary.scalar("Estimate", replay_chosen_q[0], family="Losses")
 
-        loss = tf.losses.huber_loss(
-            target, replay_chosen_q, reduction=tf.losses.Reduction.NONE)
-        if self.summary_writer is not None:
-            with tf.variable_scope('Losses'):
-                tf.summary.scalar('HuberLoss', tf.reduce_mean(loss))
-        return self.optimizer.minimize(tf.reduce_mean(loss))
+            tf.summary.scalar("Target", target[0], family="Losses")
+            tf.summary.scalar("Estimate", replay_chosen_q[0], family="Losses")
+
+            loss = tf.losses.huber_loss(
+                target, replay_chosen_q, reduction=tf.losses.Reduction.NONE)
+
+            if self.summary_writer is not None:
+                    tf.summary.scalar('HuberLoss', tf.reduce_mean(loss))
+            return self.optimizer.minimize(tf.reduce_mean(loss))
 
     def _build_sync_op(self):
         """Builds ops for assigning weights from online to target network.
@@ -565,13 +570,6 @@ class SimpleBDQNAgent(object):
                 self._sess.run(self.reset_priors_op)
                 for _ in range(training_iterations):
                     self._sess.run(self.bayes_reg_op)
-
-        # if self.training_steps % self.sample_weight_period == 0:
-        #     # cov = self._sess.run(self.cov)
-        #     # for a in range(self.num_actions):
-        #     #     print((cov[a, :,:]))
-        #     #     np.linalg.cholesky(cov[a,:,:])            
-        #     self._sess.run(self.sample_weights_op)
 
         self.training_steps += 1
 
