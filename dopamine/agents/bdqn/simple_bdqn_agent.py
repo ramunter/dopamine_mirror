@@ -69,8 +69,8 @@ class SimpleBDQNAgent(object):
                      epsilon=0.00001,
                      centered=True),
                  summary_writer=None,
-                 summary_writing_frequency=1,
-                 coef_var=0.01,
+                 summary_writing_frequency=10,
+                 coef_var=10,
                  noise_var=1):
         """Initializes the agent and constructs the components of its graph.
 
@@ -188,7 +188,7 @@ class SimpleBDQNAgent(object):
     def cov_decomp_initializer(self):
         cov_decomp = np.zeros(
             (self.num_actions, self.encoding_size, self.encoding_size))
-        cov = np.eye(self.encoding_size)
+        cov = np.eye(self.encoding_size)*self.coef_var
         for i in range(self.num_actions):
             cov_decomp[i, :, :] = np.linalg.cholesky(
                 ((cov+np.transpose(cov))/2.))  # Whats going on here?
@@ -250,7 +250,7 @@ class SimpleBDQNAgent(object):
 
         # Build bayes reg variables
 
-        self.encoding_size = self._net_outputs.encoding.get_shape()[1]
+        self.encoding_size = int(self._net_outputs.encoding.get_shape()[1])
 
 
         self.mean = tf.get_variable(
@@ -291,8 +291,24 @@ class SimpleBDQNAgent(object):
         with tf.name_scope("Sample_Weights"):
             samples = []
             for a in range(self.num_actions):
+                
                 samples.append(tf.squeeze(
-                    self.mean[a, :, None] + self.cov_decomp[a,:,:]@tfd.Normal(loc=0, scale=1).sample((self.encoding_size,1))))
+                    tfd.MultivariateNormalTriL(
+                        loc=self.mean[a,:],
+                        scale_tril=self.cov_decomp[a,:,:]).sample(1)
+                        )
+                )
+
+                tf.summary.histogram(str(a), samples[a], family="Weight_Histograms")
+
+                temp = tf.squeeze(
+                    tfd.MultivariateNormalTriL(
+                        loc=self.mean[a,:],
+                        scale_tril=self.cov_decomp[a,:,:]).sample(10000)
+                        )
+                
+                for weight in range(self.encoding_size):
+                    tf.summary.histogram(str(weight), temp[weight,:], family="per_weight_dist")
 
             weight_samples = tf.stack(samples, axis=0)
             return tf.assign(self.weight_samples, weight_samples, validate_shape=True)
@@ -339,17 +355,24 @@ class SimpleBDQNAgent(object):
 
     def _update_single_prior_op(self, action, encoding, target):
         target = tf.reshape(target, [-1, 1], name="target")
-        phiphiT = self.phiphiT[action, :, :] + \
-            tf.matmul(encoding, encoding, transpose_a=True)
 
-        phiY = self.phiY[action, :, None] + \
-            tf.matmul(encoding, target, transpose_a=True)
+        phiphiT = self.phiphiT[action,:,:] + tf.matmul(encoding, encoding, transpose_a=True)
+        phiY = self.phiY[action,:,None] + tf.matmul(encoding, target, transpose_a=True)
 
-        inv_cov = phiphiT + \
-            tf.linalg.inv(self.cov[action,:,:])
-        cov = self.noise_var*tf.linalg.inv(inv_cov)
+        cov = tf.linalg.inv(phiphiT + \
+            tf.linalg.inv(tf.eye(self.encoding_size)*self.coef_var))
 
-        mean = cov@(phiY+inv_cov@self.mean[action,:,None])
+        mean = cov@phiY
+
+        # phiphiT = tf.matmul(encoding, encoding, transpose_a=True)
+        # phiY = tf.matmul(encoding, target, transpose_a=True)
+
+        # inv_cov = phiphiT + \
+        #     tf.linalg.inv(self.cov[action,:,:])
+
+        # cov = self.noise_var*tf.linalg.inv(inv_cov)
+
+        # mean = cov@(phiY+inv_cov@self.mean[action,:,None])
 
         cov_decomp = tf.linalg.cholesky((cov+tf.transpose(cov))/2.)
 
@@ -409,6 +432,8 @@ class SimpleBDQNAgent(object):
                         self._replay_next_target_net_outputs.encoding,
                         transpose_b=True)
 
+            tf.summary.scalar("sample_diff", tf.reduce_mean(qt-qs))
+
             tf.summary.scalar("mean", tf.reduce_mean(
                 qt, axis=1)[0], family="q-values0")
             tf.summary.scalar("mean", tf.reduce_mean(
@@ -441,16 +466,13 @@ class SimpleBDQNAgent(object):
                 reduction_indices=1,
                 name='replay_chosen_q')
 
-
-            tf.summary.scalar("Target", target[0], family="Losses")
-            tf.summary.scalar("Estimate", replay_chosen_q[0], family="Losses")
-
             loss = tf.losses.huber_loss(
                 target, replay_chosen_q, reduction=tf.losses.Reduction.NONE)
 
             if self.summary_writer is not None:
                     tf.summary.scalar('HuberLoss', tf.reduce_mean(loss))
             return self.optimizer.minimize(tf.reduce_mean(loss))
+
 
     def _build_sync_op(self):
         """Builds ops for assigning weights from online to target network.
@@ -562,14 +584,14 @@ class SimpleBDQNAgent(object):
                         summary, self.training_steps)
 
             if self.training_steps % self.target_update_period == 0:
-                self._sess.run(self._sync_qt_ops)
-
+                self._sess.run([self._sync_qt_ops, self.reset_priors_op])
                 training_iterations = int(min(
                     self._replay.memory.add_count, self.target_update_period*10)/self._replay.batch_size)
-                # if self.training_steps % (self.target_update_period*10) == 0:
-                self._sess.run(self.reset_priors_op)
+
                 for _ in range(training_iterations):
                     self._sess.run(self.bayes_reg_op)
+                self._sess.run(self.sample_weights_op)
+                
 
         self.training_steps += 1
 
