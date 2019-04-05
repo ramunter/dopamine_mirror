@@ -392,6 +392,7 @@ class Runner(object):
         """
         # Perform the evaluation phase -- no learning.
         self._agent.eval_mode = True
+        self._environment.render = True
         _, sum_returns, num_episodes = self._run_one_phase(
             self._evaluation_steps, statistics, 'eval')
         average_return = sum_returns / num_episodes if num_episodes > 0 else 0.0

@@ -42,6 +42,7 @@ nature_bdqn_network = atari_lib.bayesian_dqn_network
 
 np.set_printoptions(precision=3)
 
+
 @gin.configurable
 class SimpleBDQNAgent(object):
     """An implementation of the DQN agent."""
@@ -142,7 +143,6 @@ class SimpleBDQNAgent(object):
         self.summary_writing_frequency = summary_writing_frequency
 
         self.coef_var = coef_var
-        self.noise_var = noise_var
         with tf.device(tf_device):
             # Create a placeholder for the state input to the DQN network.
             # The last axis indicates the number of consecutive frames stacked.
@@ -203,6 +203,18 @@ class SimpleBDQNAgent(object):
     def phiY_initializer(self):
         return tf.cast(np.zeros((self.num_actions, self.encoding_size)), dtype=tf.float32)
 
+    @property
+    def alpha_initializer(self):
+        return tf.cast(0.001*np.ones((self.num_actions)), dtype=tf.float32)
+
+    @property
+    def beta_initializer(self):
+        return tf.cast(0.001*np.ones((self.num_actions)), dtype=tf.float32)
+    
+    @property
+    def noise_initializer(self):
+        return tf.cast(np.zeros((self.num_actions)), dtype=tf.float32)
+
     def _get_network_type(self):
         """Returns the type of the outputs of a BDQN value network.
         Returns:
@@ -252,7 +264,6 @@ class SimpleBDQNAgent(object):
 
         self.encoding_size = int(self._net_outputs.encoding.get_shape()[1])
 
-
         self.mean = tf.get_variable(
             "parameters/mean", initializer=self.mean_initializer, trainable=False)
         self.weight_samples = tf.get_variable(
@@ -265,6 +276,11 @@ class SimpleBDQNAgent(object):
             "parameters/phiphiT", initializer=self.phiphiT_initializer, trainable=False)
         self.phiY = tf.get_variable(
             "parameters/phiY", initializer=self.phiY_initializer, trainable=False)
+        self.noise_var = tf.get_variable("parameters/noise_var", initializer=self.noise_initializer, trainable=False)
+        self.a = tf.get_variable(
+            "parameters/alpha", initializer=self.alpha_initializer, trainable=False)
+        self.b = tf.get_variable(
+            "parameters/beta", initializer=self.beta_initializer, trainable=False)
 
         self.reset_priors_op = self.build_reset_priors_op()
         self.sample_weights_op = self.build_sample_weights_op()
@@ -274,10 +290,9 @@ class SimpleBDQNAgent(object):
                       transpose_b=True), name="Mean_Q")[0]
         self._sample_q_argmax = tf.argmax(
             tf.matmul(self.weight_samples,
-                      self._net_outputs.encoding, transpose_b=True)# +
-            # tfd.MultivariateNormalDiag(
-            #     loc=[0], scale_diag=[self.noise_var]).sample(self.num_actions)
-        , name="Sample_Q")[0]
+                      self._net_outputs.encoding, transpose_b=True) +
+            tfd.MultivariateNormalDiag(
+                loc=[0]*self.num_actions, scale_diag=self.noise_var).sample(1), name="Sample_Q")[0]
 
         self._replay_net_outputs = self.online_convnet(self._replay.states)
         self._replay_next_target_net_outputs = self.target_convnet(
@@ -290,28 +305,41 @@ class SimpleBDQNAgent(object):
     def build_sample_weights_op(self):
         with tf.name_scope("Sample_Weights"):
             samples = []
+            noise_var = []
             for a in range(self.num_actions):
-                
+
                 samples.append(tf.squeeze(
                     tfd.MultivariateNormalTriL(
-                        loc=self.mean[a,:],
-                        scale_tril=self.cov_decomp[a,:,:]).sample(1)
+                        loc=self.mean[a, :],
+                        scale_tril=self.cov_decomp[a, :, :]).sample(1)
                         )
                 )
 
-                tf.summary.histogram(str(a), samples[a], family="Weight_Histograms")
+                tf.summary.histogram(
+                    str(a), samples[a], family="Weight_Histograms")
 
-                temp = tf.squeeze(
-                    tfd.MultivariateNormalTriL(
-                        loc=self.mean[a,:],
-                        scale_tril=self.cov_decomp[a,:,:]).sample(10000)
+
+
+                var_dist = tfd.InverseGamma(concentration=self.a[a], rate=self.b[a])
+
+                noise_var.append(var_dist.sample(1))
+                if self.summary_writer:
+                    tf.summary.histogram(str(a), var_dist.sample(100000), family="noise_dist")
+
+                    temp = tf.squeeze(
+                        tfd.MultivariateNormalTriL(
+                            loc=self.mean[a, :],
+                            scale_tril=self.cov_decomp[a, :, :]).sample(100000)
                         )
-                
-                for weight in range(self.encoding_size):
-                    tf.summary.histogram(str(weight), temp[weight,:], family="per_weight_dist")
+
+                    for weight in range(self.encoding_size):
+                        tf.summary.histogram(
+                            str(weight), temp[weight, :], family="per_weight_dist")
 
             weight_samples = tf.stack(samples, axis=0)
-            return tf.assign(self.weight_samples, weight_samples, validate_shape=True)
+            noise_var = tf.squeeze(tf.stack(noise_var))
+            return [tf.assign(self.weight_samples, weight_samples, validate_shape=True),
+                    tf.assign(self.noise_var, noise_var, validate_shape=True)]
 
     def build_reset_priors_op(self):
         with tf.name_scope("Reset_Priors"):
@@ -326,6 +354,10 @@ class SimpleBDQNAgent(object):
                 tf.assign(self.phiphiT, value=self.phiphiT_initializer, validate_shape=True))
             priors.append(
                 tf.assign(self.phiY, value=self.phiY_initializer, validate_shape=True))
+            priors.append(
+                tf.assign(self.a, value=self.alpha_initializer, validate_shape=True))
+            priors.append(
+                tf.assign(self.b, value=self.beta_initializer, validate_shape=True))
             return priors
 
     def build_bayes_reg_op(self):
@@ -335,7 +367,8 @@ class SimpleBDQNAgent(object):
             for action in range(0, self.num_actions):
                 boolean_mask = tf.equal(self._replay.actions, action)
                 rewards = tf.boolean_mask(self._replay.rewards, boolean_mask)
-                terminals = tf.boolean_mask(self._replay.terminals, boolean_mask)
+                terminals = tf.boolean_mask(
+                    self._replay.terminals, boolean_mask)
                 state_q_encoding = tf.boolean_mask(
                     self._replay_net_outputs.encoding, boolean_mask)
                 next_state_q_encoding = tf.boolean_mask(
@@ -356,12 +389,14 @@ class SimpleBDQNAgent(object):
     def _update_single_prior_op(self, action, encoding, target):
         target = tf.reshape(target, [-1, 1], name="target")
 
-        phiphiT = self.phiphiT[action,:,:] + tf.matmul(encoding, encoding, transpose_a=True)
-        phiY = self.phiY[action,:,None] + tf.matmul(encoding, target, transpose_a=True)
+        phiphiT = self.phiphiT[action, :, :] + \
+            tf.matmul(encoding, encoding, transpose_a=True)
+        phiY = self.phiY[action, :, None] + \
+            tf.matmul(encoding, target, transpose_a=True)
 
-        cov = tf.linalg.inv(phiphiT + \
-            tf.linalg.inv(tf.eye(self.encoding_size)*self.coef_var))
-
+        inv_cov = phiphiT + \
+            tf.linalg.inv(tf.eye(self.encoding_size)*self.coef_var)
+        cov = tf.linalg.inv(inv_cov)
         mean = cov@phiY
 
         # phiphiT = tf.matmul(encoding, encoding, transpose_a=True)
@@ -376,11 +411,20 @@ class SimpleBDQNAgent(object):
 
         cov_decomp = tf.linalg.cholesky((cov+tf.transpose(cov))/2.)
 
-        update = [tf.assign(self.phiphiT[action, :, :], phiphiT),
+        a = self.a[action] + tf.cast(tf.size(target)/2, tf.float32)
+
+        b = self.b[action] + 0.5 *\
+            tf.squeeze(tf.transpose(target)@target +
+                        tf.transpose(mean)@inv_cov@mean -
+                        tf.transpose(self.mean[action, :, None])@tf.linalg.inv(self.cov[action, :, :])@self.mean[action, :, None])
+
+        update=[tf.assign(self.phiphiT[action, :, :], phiphiT),
                   tf.assign(self.phiY[action, :], tf.squeeze(phiY)),
                   tf.assign(self.mean[action, :], tf.squeeze(mean)),
                   tf.assign(self.cov[action, :, :], cov),
-                  tf.assign(self.cov_decomp[action, :, :], cov_decomp)]
+                  tf.assign(self.cov_decomp[action, :, :], cov_decomp),
+                  tf.assign(self.a[action], a),
+                  tf.assign(self.b[action], b)]
 
         return update
 
@@ -414,21 +458,21 @@ class SimpleBDQNAgent(object):
         #     axis=1)
         with tf.name_scope("Calc_Target"):
 
-            replay_next_q_argmax = tf.one_hot(
+            replay_next_q_argmax=tf.one_hot(
                 tf.argmax(tf.matmul(
                     self.weight_samples, self._replay_next_net_outputs.encoding, transpose_b=True)), self.num_actions, name="argmax_next_q")
 
-            replay_next_qt_max = tf.reduce_sum(
+            replay_next_qt_max=tf.reduce_sum(
                 tf.transpose(tf.matmul(self.mean, self._replay_next_target_net_outputs.encoding,
                                     transpose_b=True)) * replay_next_q_argmax,
                 reduction_indices=1,
                 name='qt_max')
 
-            qt = tf.matmul(self.mean,
+            qt=tf.matmul(self.mean,
                         self._replay_next_target_net_outputs.encoding,
                         transpose_b=True)
 
-            qs = tf.matmul(self.weight_samples,
+            qs=tf.matmul(self.weight_samples,
                         self._replay_next_target_net_outputs.encoding,
                         transpose_b=True)
 
@@ -454,19 +498,19 @@ class SimpleBDQNAgent(object):
         train_op: An op performing one step of training from replay data.
         """
 
-        target = tf.stop_gradient(self._build_target_q_op())
+        target=tf.stop_gradient(self._build_target_q_op())
 
         with tf.name_scope("Loss"):
-        
-            replay_action_one_hot = tf.one_hot(
+
+            replay_action_one_hot=tf.one_hot(
                 self._replay.actions, self.num_actions, 1., 0., name='action_one_hot')
-            replay_chosen_q = tf.reduce_sum(
+            replay_chosen_q=tf.reduce_sum(
                 tf.transpose(tf.matmul(self.mean, self._replay_net_outputs.encoding,
                                     transpose_b=True)) * replay_action_one_hot,
                 reduction_indices=1,
                 name='replay_chosen_q')
 
-            loss = tf.losses.huber_loss(
+            loss=tf.losses.huber_loss(
                 target, replay_chosen_q, reduction=tf.losses.Reduction.NONE)
 
             if self.summary_writer is not None:
@@ -481,10 +525,10 @@ class SimpleBDQNAgent(object):
         ops: A list of ops assigning weights from online to target network.
         """
         # Get trainable variables from online and target DQNs
-        sync_qt_ops = []
-        trainables_online = tf.get_collection(
+        sync_qt_ops=[]
+        trainables_online=tf.get_collection(
             tf.GraphKeys.TRAINABLE_VARIABLES, scope='Online')
-        trainables_target = tf.get_collection(
+        trainables_target=tf.get_collection(
             tf.GraphKeys.TRAINABLE_VARIABLES, scope='Target')
         for (w_online, w_target) in zip(trainables_online, trainables_target):
             # Assign weights from online to target network.
@@ -507,7 +551,7 @@ class SimpleBDQNAgent(object):
         if not self.eval_mode:
             self._train_step()
 
-        self.action = self._select_action()
+        self.action=self._select_action()
         return self.action
 
     def step(self, reward, observation):
@@ -523,7 +567,7 @@ class SimpleBDQNAgent(object):
         Returns:
         int, the selected action.
         """
-        self._last_observation = self._observation
+        self._last_observation=self._observation
         self._record_observation(observation)
 
         if not self.eval_mode:
@@ -531,7 +575,7 @@ class SimpleBDQNAgent(object):
                 self._last_observation, self.action, reward, False)
             self._train_step()
 
-        self.action = self._select_action()
+        self.action=self._select_action()
         return self.action
 
     def end_episode(self, reward):
@@ -579,19 +623,19 @@ class SimpleBDQNAgent(object):
                 if (self.summary_writer is not None and
                     self.training_steps > 0 and
                         self.training_steps % self.summary_writing_frequency == 0):
-                    summary = self._sess.run(self._merged_summaries)
+                    summary=self._sess.run(self._merged_summaries)
                     self.summary_writer.add_summary(
                         summary, self.training_steps)
 
             if self.training_steps % self.target_update_period == 0:
                 self._sess.run([self._sync_qt_ops, self.reset_priors_op])
-                training_iterations = int(min(
+                training_iterations=int(min(
                     self._replay.memory.add_count, self.target_update_period*10)/self._replay.batch_size)
 
                 for _ in range(training_iterations):
                     self._sess.run(self.bayes_reg_op)
                 self._sess.run(self.sample_weights_op)
-                
+
 
         self.training_steps += 1
 
@@ -606,10 +650,10 @@ class SimpleBDQNAgent(object):
         """
         # Set current observation. We do the reshaping to handle environments
         # without frame stacking.
-        self._observation = np.reshape(observation, self.observation_shape)
+        self._observation=np.reshape(observation, self.observation_shape)
         # Swap out the oldest frame with the current frame.
-        self.state = np.roll(self.state, -1, axis=-1)
-        self.state[0, ..., -1] = self._observation
+        self.state=np.roll(self.state, -1, axis=-1)
+        self.state[0, ..., -1]=self._observation
 
     def _store_transition(self, last_observation, action, reward, is_terminal):
         """Stores an experienced transition.
@@ -658,10 +702,10 @@ class SimpleBDQNAgent(object):
             global_step=iteration_number)
         # Checkpoint the out-of-graph replay buffer.
         self._replay.save(checkpoint_dir, iteration_number)
-        bundle_dictionary = {}
-        bundle_dictionary['state'] = self.state
-        bundle_dictionary['eval_mode'] = self.eval_mode
-        bundle_dictionary['training_steps'] = self.training_steps
+        bundle_dictionary={}
+        bundle_dictionary['state']=self.state
+        bundle_dictionary['eval_mode']=self.eval_mode
+        bundle_dictionary['training_steps']=self.training_steps
         return bundle_dictionary
 
     def unbundle(self, checkpoint_dir, iteration_number, bundle_dictionary):
@@ -690,7 +734,7 @@ class SimpleBDQNAgent(object):
             return False
         for key in self.__dict__:
             if key in bundle_dictionary:
-                self.__dict__[key] = bundle_dictionary[key]
+                self.__dict__[key]=bundle_dictionary[key]
         # Restore the agent's TensorFlow graph.
         self._saver.restore(self._sess,
                             os.path.join(checkpoint_dir,

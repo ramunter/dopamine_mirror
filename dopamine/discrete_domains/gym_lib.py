@@ -125,7 +125,7 @@ def _bayesian_discrete_domain_network(min_vals, max_vals, num_actions, state):
     net /= max_vals - min_vals
     net = 2.0 * net - 1.0  # Rescale in range [-1, 1].
     net = slim.fully_connected(net, 512)
-    net = slim.fully_connected(net, 512)
+    net = slim.fully_connected(net, 12)
 
     # We are constructing a DQN-style network.
     return net#, slim.fully_connected(net, num_actions, activation_fn=None)
@@ -240,9 +240,9 @@ def fourier_dqn_network(min_vals,
     # Q-values are always linear w.r.t. last layer.
     q_values = slim.fully_connected(
         net, num_actions, activation_fn=None, biases_initializer=None)
-    return q_values
+    return net
 
-
+@gin.configurable
 def cartpole_fourier_dqn_network(num_actions, network_type, state):
     """Builds the function approximator used to compute the agent's Q-values.
 
