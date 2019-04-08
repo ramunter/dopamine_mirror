@@ -205,11 +205,11 @@ class SimpleBDQNAgent(object):
 
     @property
     def alpha_initializer(self):
-        return tf.cast(0.001*np.ones((self.num_actions)), dtype=tf.float32)
+        return tf.cast(1*np.ones((self.num_actions)), dtype=tf.float32)
 
     @property
     def beta_initializer(self):
-        return tf.cast(0.001*np.ones((self.num_actions)), dtype=tf.float32)
+        return tf.cast(1*np.ones((self.num_actions)), dtype=tf.float32)
     
     @property
     def noise_initializer(self):
@@ -292,7 +292,8 @@ class SimpleBDQNAgent(object):
             tf.matmul(self.weight_samples,
                       self._net_outputs.encoding, transpose_b=True) +
             tfd.MultivariateNormalDiag(
-                loc=[0]*self.num_actions, scale_diag=self.noise_var).sample(1), name="Sample_Q")[0]
+                loc=[0]*self.num_actions, scale_diag=self.noise_var).sample(1),
+            name="Sample_Q")[0]
 
         self._replay_net_outputs = self.online_convnet(self._replay.states)
         self._replay_next_target_net_outputs = self.target_convnet(
@@ -321,8 +322,8 @@ class SimpleBDQNAgent(object):
 
 
                 var_dist = tfd.InverseGamma(concentration=self.a[a], rate=self.b[a])
-
                 noise_var.append(var_dist.sample(1))
+
                 if self.summary_writer:
                     tf.summary.histogram(str(a), var_dist.sample(100000), family="noise_dist")
 
@@ -374,12 +375,18 @@ class SimpleBDQNAgent(object):
                 next_state_q_encoding = tf.boolean_mask(
                     self._replay_next_target_net_outputs.encoding, boolean_mask)
 
-                max_q = tf.reduce_max(
-                    tf.matmul(self.mean, next_state_q_encoding,
-                        transpose_b=True))
+                replay_next_q_argmax=tf.one_hot(
+                    tf.argmax(tf.matmul(
+                        self.mean, next_state_q_encoding, transpose_b=True)), self.num_actions, name="argmax_next_q")
+
+                replay_next_qt_max=tf.reduce_sum(
+                    tf.transpose(tf.matmul(self.weight_samples, next_state_q_encoding,
+                                        transpose_b=True)) * replay_next_q_argmax,
+                    reduction_indices=1,
+                    name='qt_max')
 
                 target = rewards + self.cumulative_gamma * \
-                    max_q * (1. - tf.cast(terminals, tf.float32))
+                    replay_next_qt_max * (1. - tf.cast(terminals, tf.float32))
 
                 updates[action] = self._update_single_prior_op(
                     action, state_q_encoding, target)
