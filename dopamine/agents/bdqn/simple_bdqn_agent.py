@@ -71,7 +71,7 @@ class SimpleBDQNAgent(object):
                      centered=True),
                  summary_writer=None,
                  summary_writing_frequency=10,
-                 coef_var=10,
+                 coef_var=0.01,
                  noise_var=1):
         """Initializes the agent and constructs the components of its graph.
 
@@ -319,8 +319,6 @@ class SimpleBDQNAgent(object):
                 tf.summary.histogram(
                     str(a), samples[a], family="Weight_Histograms")
 
-
-
                 var_dist = tfd.InverseGamma(concentration=self.a[a], rate=self.b[a])
                 noise_var.append(var_dist.sample(1))
 
@@ -339,18 +337,13 @@ class SimpleBDQNAgent(object):
 
             weight_samples = tf.stack(samples, axis=0)
             noise_var = tf.squeeze(tf.stack(noise_var))
+
             return [tf.assign(self.weight_samples, weight_samples, validate_shape=True),
                     tf.assign(self.noise_var, noise_var, validate_shape=True)]
 
     def build_reset_priors_op(self):
         with tf.name_scope("Reset_Priors"):
             priors = []
-            priors.append(
-                tf.assign(self.mean, value=self.mean_initializer, validate_shape=True))
-            priors.append(
-                tf.assign(self.cov, value=self.cov_initializer, validate_shape=True))
-            priors.append(tf.assign(self.cov_decomp,
-                                    value=self.cov_decomp_initializer, validate_shape=True))
             priors.append(
                 tf.assign(self.phiphiT, value=self.phiphiT_initializer, validate_shape=True))
             priors.append(
@@ -425,6 +418,9 @@ class SimpleBDQNAgent(object):
                         tf.transpose(mean)@inv_cov@mean -
                         tf.transpose(self.mean[action, :, None])@tf.linalg.inv(self.cov[action, :, :])@self.mean[action, :, None])
 
+        tf.summary.scalar(str(action), a,  family="alpha")
+
+        tf.summary.scalar(str(action), b, family="beta")
         update=[tf.assign(self.phiphiT[action, :, :], phiphiT),
                   tf.assign(self.phiY[action, :], tf.squeeze(phiY)),
                   tf.assign(self.mean[action, :], tf.squeeze(mean)),
@@ -626,7 +622,11 @@ class SimpleBDQNAgent(object):
         # have been run. This matches the Nature DQN behaviour.
         if self._replay.memory.add_count > self.min_replay_history:
             if self.training_steps % self.update_period == 0:
+                
+                # Train step
                 self._sess.run(self._train_op)
+
+                # Add summary things
                 if (self.summary_writer is not None and
                     self.training_steps > 0 and
                         self.training_steps % self.summary_writing_frequency == 0):
@@ -634,6 +634,7 @@ class SimpleBDQNAgent(object):
                     self.summary_writer.add_summary(
                         summary, self.training_steps)
 
+            # Retrain bayes reg
             if self.training_steps % self.target_update_period == 0:
                 self._sess.run([self._sync_qt_ops, self.reset_priors_op])
                 training_iterations=int(min(

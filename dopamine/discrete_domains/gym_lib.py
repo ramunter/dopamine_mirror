@@ -94,7 +94,7 @@ def _basic_discrete_domain_network(min_vals, max_vals, num_actions, state,
     net /= max_vals - min_vals
     net = 2.0 * net - 1.0  # Rescale in range [-1, 1].
     net = slim.fully_connected(net, 512)
-    net = slim.fully_connected(net, 512)
+    net = slim.fully_connected(net, 12)
     if num_atoms is None:
         # We are constructing a DQN-style network.
         return slim.fully_connected(net, num_actions, activation_fn=None)
