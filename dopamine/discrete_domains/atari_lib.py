@@ -99,8 +99,7 @@ def bayesian_dqn_network(num_actions, network_type, state):
     net = slim.conv2d(net, 64, [4, 4], stride=2)
     net = slim.conv2d(net, 64, [3, 3], stride=1)
     net = slim.flatten(net)
-    net = slim.fully_connected(net, 256)
-    net = slim.fully_connected(net, 64)
+    net = slim.fully_connected(net, 512)
     q_values = slim.fully_connected(net, num_actions, activation_fn=None)
     return network_type(q_values, net)
 

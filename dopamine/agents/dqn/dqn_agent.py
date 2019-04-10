@@ -102,7 +102,7 @@ class DQNAgent(object):
                      epsilon=0.00001,
                      centered=True),
                  summary_writer=None,
-                 summary_writing_frequency=500):
+                 summary_writing_frequency=4):
         """Initializes the agent and constructs the components of its graph.
 
         Args:
@@ -246,11 +246,12 @@ class DQNAgent(object):
         # TODO(bellemare): Ties should be broken. They are unlikely to happen when
         # using a deep network, but may affect performance with a linear
         # approximation scheme.
-        self._q_argmax = tf.argmax(self._net_outputs.q_values, axis=1)[0]
-
-        self._replay_net_outputs = self.online_convnet(self._replay.states)
-        self._replay_next_target_net_outputs = self.target_convnet(
-            self._replay.next_states)
+        with tf.variable_scope('Online_Actions'):
+            self._q_argmax = tf.argmax(self._net_outputs.q_values, axis=1)[0]
+        with tf.variable_scope('Replay'):
+            self._replay_net_outputs = self.online_convnet(self._replay.states)
+            self._replay_next_target_net_outputs = self.target_convnet(
+                self._replay.next_states)
 
     def _build_replay_buffer(self, use_staging):
         """Creates the replay buffer used by the agent.
@@ -302,6 +303,11 @@ class DQNAgent(object):
             reduction_indices=1,
             name='replay_chosen_q')
 
+        tf.summary.scalar("net0", tf.reduce_mean(
+            self._replay_net_outputs.q_values[0]), family="q-values")
+        tf.summary.scalar("net1", tf.reduce_mean(
+            self._replay_net_outputs.q_values[1]), family="q-values")
+
         target = tf.stop_gradient(self._build_target_q_op())
         loss = tf.losses.huber_loss(
             target, replay_chosen_q, reduction=tf.losses.Reduction.NONE)
@@ -317,6 +323,7 @@ class DQNAgent(object):
           ops: A list of ops assigning weights from online to target network.
         """
         # Get trainable variables from online and target DQNs
+        
         sync_qt_ops = []
         trainables_online = tf.get_collection(
             tf.GraphKeys.TRAINABLE_VARIABLES, scope='Online')
