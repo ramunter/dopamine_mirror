@@ -318,9 +318,9 @@ def acrobot_bdqn_network(num_actions, network_type, state):
     Returns:
       net: _network_type object containing the tensors output by the network.
     """
-    net, q_values = _bayesian_discrete_domain_network(
+    net = _bayesian_discrete_domain_network(
         ACROBOT_MIN_VALS, ACROBOT_MAX_VALS, num_actions, state)
-    return network_type(q_values, net)
+    return network_type(net)
 
 
 @gin.configurable

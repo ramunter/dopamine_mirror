@@ -23,7 +23,7 @@ tf.train.AdamOptimizer.epsilon = 0.0003125
 
 create_gym_environment.environment_name = 'Acrobot'
 create_gym_environment.version = 'v1'
-create_agent.agent_name = 'bdqn'
+create_agent.agent_name = 'simple_bdqn'
 Runner.create_environment_fn = @gym_lib.create_gym_environment
 Runner.num_iterations = 500
 Runner.training_steps = 1000
@@ -32,3 +32,15 @@ Runner.max_steps_per_episode = 500
 
 WrappedReplayBuffer.replay_capacity = 50000
 WrappedReplayBuffer.batch_size = 128
+
+SimpleBDQNAgent.observation_dtype = %gym_lib.ACROBOT_OBSERVATION_DTYPE
+SimpleBDQNAgent.observation_shape = %gym_lib.ACROBOT_OBSERVATION_SHAPE
+SimpleBDQNAgent.stack_size = %gym_lib.ACROBOT_STACK_SIZE
+SimpleBDQNAgent.network = @gym_lib.acrobot_bdqn_network
+SimpleBDQNAgent.gamma = 0.99
+SimpleBDQNAgent.update_horizon = 1
+SimpleBDQNAgent.min_replay_history = 200
+SimpleBDQNAgent.update_period = 4
+SimpleBDQNAgent.target_update_period = 1000
+SimpleBDQNAgent.tf_device = '/cpu:*'  # use '/cpu:*' for non-GPU version
+SimpleBDQNAgent.optimizer = @tf.train.AdamOptimizer()

@@ -323,12 +323,12 @@ class SimpleBDQNAgent(object):
                 noise_var.append(var_dist.sample(1))
 
                 if self.summary_writer:
-                    tf.summary.histogram(str(a), var_dist.sample(100000), family="noise_dist")
+                    tf.summary.histogram(str(a), var_dist.sample(1000), family="noise_dist")
 
                     temp = tf.squeeze(
                         tfd.MultivariateNormalTriL(
                             loc=self.mean[a, :],
-                            scale_tril=self.cov_decomp[a, :, :]).sample(100000)
+                            scale_tril=self.cov_decomp[a, :, :]).sample(1000)
                         )
 
                     for weight in range(self.encoding_size):
@@ -549,7 +549,6 @@ class SimpleBDQNAgent(object):
         """
         self._reset_state()
         self._record_observation(observation)
-        self._sess.run(self.sample_weights_op)
 
         if not self.eval_mode:
             self._train_step()
@@ -625,6 +624,7 @@ class SimpleBDQNAgent(object):
                 
                 # Train step
                 self._sess.run(self._train_op)
+                self._sess.run(self.sample_weights_op)
 
                 # Add summary things
                 if (self.summary_writer is not None and
