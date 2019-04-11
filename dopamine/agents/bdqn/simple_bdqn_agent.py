@@ -234,8 +234,8 @@ class SimpleBDQNAgent(object):
         """
         return self.network(self.num_actions, self._get_network_type(), state)
 
-    def sample_weight_distributions(self):
-        return tf.stack([tf.squeeze(dist.sample(1)) for dist in self.weight_distributions])
+    def sample_weight_distributions(self, n=1):
+        return tf.stack([tf.squeeze(dist.sample(n)) for dist in self.weight_distributions])
 
     def _build_networks(self):
         """Builds the Q-value network computations needed for acting and training.
@@ -363,10 +363,10 @@ class SimpleBDQNAgent(object):
             next_state_q_encoding = tf.boolean_mask(
                 self._replay_next_target_net_outputs.encoding, boolean_mask)
 
+            num_samples = tf.reduce_sum(tf.cast(boolean_mask, tf.int32))
+
             replay_next_q_argmax = tf.one_hot(
-                tf.argmax(tf.matmul(
-                    self.sample_weight_distributions(),
-                    next_state_q_encoding, transpose_b=True)), self.num_actions, name="argmax_next_q")
+                tf.argmax(self.sample_weight_distributions(n=num_samples)@tf.transpose(next_state_q_encoding)), self.num_actions, name="argmax_next_q")
 
             replay_next_qt_max = tf.reduce_sum(
                 tf.transpose(tf.matmul(self.mean, next_state_q_encoding,
@@ -392,12 +392,13 @@ class SimpleBDQNAgent(object):
         tartarT = self.tartarT[action] + \
             tf.matmul(target, target, transpose_a=True)
 
-        num_samples = self.num_samples[action] + tf.cast(tf.size(target), tf.float32)
+        num_samples = self.num_samples[action] + \
+            tf.cast(tf.size(target), tf.float32)
 
         update = [tf.assign(self.phiphiT[action, :, :], phiphiT),
                   tf.assign(self.phiY[action, :], tf.squeeze(phiY)),
                   tf.assign(self.tartarT[action], tf.squeeze(tartarT)),
-                  tf.assign(self.num_samples[action], num_samples )]
+                  tf.assign(self.num_samples[action], num_samples)]
 
         return update
 
@@ -744,5 +745,3 @@ class SimpleBDQNAgent(object):
                             os.path.join(checkpoint_dir,
                                          'tf_ckpt-{}'.format(iteration_number)))
         return True
-
-
