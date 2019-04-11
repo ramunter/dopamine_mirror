@@ -40,5 +40,5 @@ SimpleBDQNAgent.min_replay_history = 50000
 SimpleBDQNAgent.update_period = 4
 SimpleBDQNAgent.target_update_period = 10000
 SimpleBDQNAgent.sample_weight_period = 50000
-SimpleBDQNAgent.tf_device = '/cpu:0'  # use '/cpu:*' for non-GPU version
+SimpleBDQNAgent.tf_device = '/cpu:*'  # use '/cpu:*' for non-GPU version
 SimpleBDQNAgent.optimizer = @tf.train.AdamOptimizer()
