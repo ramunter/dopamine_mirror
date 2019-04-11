@@ -31,7 +31,7 @@ Runner.evaluation_steps = 1000
 Runner.max_steps_per_episode = 500
 
 WrappedReplayBuffer.replay_capacity = 50000
-WrappedReplayBuffer.batch_size = 128
+WrappedReplayBuffer.batch_size = 8
 
 SimpleBDQNAgent.observation_dtype = %gym_lib.ACROBOT_OBSERVATION_DTYPE
 SimpleBDQNAgent.observation_shape = %gym_lib.ACROBOT_OBSERVATION_SHAPE

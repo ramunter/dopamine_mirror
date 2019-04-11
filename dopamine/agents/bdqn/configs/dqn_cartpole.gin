@@ -34,7 +34,7 @@ Runner.evaluation_steps = 1000
 Runner.max_steps_per_episode = 200  # Default max episode length.
 
 WrappedReplayBuffer.replay_capacity = 50000
-WrappedReplayBuffer.batch_size = 128
+WrappedReplayBuffer.batch_size = 32
 
 SimpleBDQNAgent.observation_shape = %gym_lib.CARTPOLE_OBSERVATION_SHAPE
 SimpleBDQNAgent.observation_dtype = %gym_lib.CARTPOLE_OBSERVATION_DTYPE

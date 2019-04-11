@@ -71,7 +71,7 @@ class SimpleBDQNAgent(object):
                      centered=True),
                  summary_writer=None,
                  summary_writing_frequency=10,
-                 coef_var=0.01,
+                 coef_var=1,
                  noise_var=1):
         """Initializes the agent and constructs the components of its graph.
 
@@ -227,12 +227,8 @@ class SimpleBDQNAgent(object):
 
         Args:
         state: `tf.Tensor`, contains the agent's current state.
-
-                value=self.cov_decomp_initializer, validate_shape=True))
         Returns:
-                value=self.cov_decomp_initializer, validate_shape=True))
-        net: _network_type object containing the tensors output by the network.
-                value=self.cov_decomp_initializer, validate_shape=True))
+            net: _network_type object containing the tensors output by the network.
         """
         return self.network(self.num_actions, self._get_network_type(), state)
 
@@ -282,6 +278,9 @@ class SimpleBDQNAgent(object):
         self.b = tf.get_variable(
             "parameters/beta", initializer=self.beta_initializer, trainable=False)
 
+        self.tartarT = tf.get_variable(
+            "parameters/tartarT", initializer=self.noise_initializer, trainable=False)
+
         self.reset_priors_op = self.build_reset_priors_op()
         self.sample_weights_op = self.build_sample_weights_op()
 
@@ -306,21 +305,24 @@ class SimpleBDQNAgent(object):
     def build_sample_weights_op(self):
         with tf.name_scope("Sample_Weights"):
             samples = []
-            noise_var = []
+            noise_var_list = []
             for a in range(self.num_actions):
+
+
+                var_dist = tfd.InverseGamma(concentration=self.a[a], rate=self.b[a])
+                noise_var = var_dist.sample(1)
+                noise_var_list.append(noise_var)
 
                 samples.append(tf.squeeze(
                     tfd.MultivariateNormalTriL(
                         loc=self.mean[a, :],
-                        scale_tril=self.cov_decomp[a, :, :]).sample(1)
+                        scale_tril=tf.sqrt(noise_var)*self.cov_decomp[a, :, :]).sample(1)
                         )
                 )
 
                 tf.summary.histogram(
                     str(a), samples[a], family="Weight_Histograms")
 
-                var_dist = tfd.InverseGamma(concentration=self.a[a], rate=self.b[a])
-                noise_var.append(var_dist.sample(1))
 
                 if self.summary_writer:
                     tf.summary.histogram(str(a), var_dist.sample(1000), family="noise_dist")
@@ -336,7 +338,7 @@ class SimpleBDQNAgent(object):
                             str(weight), temp[weight, :], family="per_weight_dist")
 
             weight_samples = tf.stack(samples, axis=0)
-            noise_var = tf.squeeze(tf.stack(noise_var))
+            noise_var = tf.squeeze(tf.stack(noise_var_list))
 
             return [tf.assign(self.weight_samples, weight_samples, validate_shape=True),
                     tf.assign(self.noise_var, noise_var, validate_shape=True)]
@@ -348,6 +350,8 @@ class SimpleBDQNAgent(object):
                 tf.assign(self.phiphiT, value=self.phiphiT_initializer, validate_shape=True))
             priors.append(
                 tf.assign(self.phiY, value=self.phiY_initializer, validate_shape=True))
+            priors.append(
+                tf.assign(self.tartarT, value=self.noise_initializer, validate_shape=True))
             priors.append(
                 tf.assign(self.a, value=self.alpha_initializer, validate_shape=True))
             priors.append(
@@ -394,6 +398,9 @@ class SimpleBDQNAgent(object):
         phiY = self.phiY[action, :, None] + \
             tf.matmul(encoding, target, transpose_a=True)
 
+        tartarT = self.tartarT[action] + \
+            tf.matmul(target, target, transpose_a=True)
+
         inv_cov = phiphiT + \
             tf.linalg.inv(tf.eye(self.encoding_size)*self.coef_var)
         cov = tf.linalg.inv(inv_cov)
@@ -413,21 +420,21 @@ class SimpleBDQNAgent(object):
 
         a = self.a[action] + tf.cast(tf.size(target)/2, tf.float32)
 
-        b = self.b[action] + 0.5 *\
-            tf.squeeze(tf.transpose(target)@target +
-                        tf.transpose(mean)@inv_cov@mean -
-                        tf.transpose(self.mean[action, :, None])@tf.linalg.inv(self.cov[action, :, :])@self.mean[action, :, None])
+        b = 1 + 0.5 *\
+            tf.squeeze(tartarT -
+                        tf.transpose(mean)@inv_cov@mean)
 
         tf.summary.scalar(str(action), a,  family="alpha")
-
         tf.summary.scalar(str(action), b, family="beta")
+
         update=[tf.assign(self.phiphiT[action, :, :], phiphiT),
                   tf.assign(self.phiY[action, :], tf.squeeze(phiY)),
                   tf.assign(self.mean[action, :], tf.squeeze(mean)),
                   tf.assign(self.cov[action, :, :], cov),
                   tf.assign(self.cov_decomp[action, :, :], cov_decomp),
                   tf.assign(self.a[action], a),
-                  tf.assign(self.b[action], b)]
+                  tf.assign(self.b[action], b),
+                  tf.assign(self.tartarT[action], tf.squeeze(tartarT))]
 
         return update
 
@@ -642,8 +649,7 @@ class SimpleBDQNAgent(object):
 
                 for _ in range(training_iterations):
                     self._sess.run(self.bayes_reg_op)
-                self._sess.run(self.sample_weights_op)
-
+                    self._sess.run(self.sample_weights_op)
 
         self.training_steps += 1
 
