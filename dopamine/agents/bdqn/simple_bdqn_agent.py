@@ -235,7 +235,7 @@ class SimpleBDQNAgent(object):
         return self.network(self.num_actions, self._get_network_type(), state)
 
     def sample_weight_distributions(self, n=1):
-        return tf.stack([tf.squeeze(dist.sample(n)) for dist in self.weight_distributions])
+        return tf.stack([tf.squeeze(dist.sample(n)) for dist in self.weight_distributions], axis=0)
 
     def _build_networks(self):
         """Builds the Q-value network computations needed for acting and training.
@@ -365,13 +365,25 @@ class SimpleBDQNAgent(object):
 
             num_samples = tf.reduce_sum(tf.cast(boolean_mask, tf.int32))
 
-            replay_next_q_argmax = tf.one_hot(
-                tf.argmax(self.sample_weight_distributions(n=num_samples)@tf.transpose(next_state_q_encoding)), self.num_actions, name="argmax_next_q")
+            # replay_next_q_argmax = tf.one_hot(
+            #     tf.argmax(self.sample_weight_distributions(n=num_samples)@tf.stack([tf.transpose(next_state_q_encoding)]*self.num_actions,0)),
+            #               self.num_actions, name="argmax_next_q")
 
+            replay_next_q_values = []
+            weights = self.sample_weight_distributions(n=num_samples)
+            for a in range(self.num_actions):
+                replay_next_q_values.append(weights[a]*(next_state_q_encoding))
+
+            replay_next_q_values = tf.stack(tf.reduce_sum(replay_next_q_values, axis=-1), axis=0)
+
+            replay_next_q_argmax = tf.one_hot(
+                tf.argmax(replay_next_q_values, axis=0),
+                          self.num_actions, name="argmax_next_q")    
+                
             replay_next_qt_max = tf.reduce_sum(
                 tf.transpose(tf.matmul(self.mean, next_state_q_encoding,
                                        transpose_b=True)) * replay_next_q_argmax,
-                reduction_indices=1,
+                axis=-1,
                 name='qt_max')
 
             target = rewards + self.cumulative_gamma * \
