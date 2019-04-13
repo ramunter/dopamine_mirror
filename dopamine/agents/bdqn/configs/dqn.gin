@@ -36,9 +36,10 @@ WrappedReplayBuffer.batch_size = 32
 
 SimpleBDQNAgent.gamma = 0.99
 SimpleBDQNAgent.update_horizon = 1
-SimpleBDQNAgent.min_replay_history = 50000
+SimpleBDQNAgent.min_replay_history = 20000
 SimpleBDQNAgent.update_period = 4
-SimpleBDQNAgent.target_update_period = 10000
-SimpleBDQNAgent.sample_weight_period = 50000
+SimpleBDQNAgent.target_update_period = 8000
 SimpleBDQNAgent.tf_device = '/cpu:*'  # use '/cpu:*' for non-GPU version
-SimpleBDQNAgent.optimizer = @tf.train.AdamOptimizer()
+SimpleBDQNAgent.optimizer = @tf.train.RMSPropOptimizer()
+
+
