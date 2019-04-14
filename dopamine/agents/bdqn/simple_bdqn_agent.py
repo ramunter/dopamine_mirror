@@ -203,7 +203,7 @@ class SimpleBDQNAgent(object):
 
     @property
     def phiphiT_initializer(self):
-        return tf.cast(tf.zeros((self.num_actions, self.encoding_size, self.encoding_size)), dtype=tf.float32)
+        return tf.cast(np.zeros((self.num_actions, self.encoding_size, self.encoding_size)), dtype=tf.float32)
 
     @property
     def phiY_initializer(self):
@@ -347,7 +347,7 @@ class SimpleBDQNAgent(object):
             priors.append(
                 tf.assign(self.tartarT, value=tf.cast(np.zeros((self.num_actions,)), dtype=tf.float32), validate_shape=True))
             priors.append(
-                tf.assign(self.a, value=self.alpha_initializer, validate_shape=True))
+                tf.assign(self.num_samples, value=tf.cast(np.zeros((self.num_actions,)), dtype=tf.float32), validate_shape=True))
             return priors
 
     def build_update_dataset_op(self):
