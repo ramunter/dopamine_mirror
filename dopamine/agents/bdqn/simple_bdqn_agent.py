@@ -71,8 +71,7 @@ class SimpleBDQNAgent(object):
                      centered=True),
                  summary_writer=None,
                  summary_writing_frequency=10,
-                 coef_var=1,
-                 noise_var=1):
+                 coef_var=10000):
         """Initializes the agent and constructs the components of its graph.
 
         Args:
@@ -104,19 +103,7 @@ class SimpleBDQNAgent(object):
         tf_device: str, Tensorflow device on which the agent's graph is executed.
         use_staging: bool, when True use a staging area to prefetch the next
             training batch, speeding training up by about 30%.
-        max_tf_checkpoints_to_keep: int, the number of TensorFlow checkpoints to
-            keep.        self.tartarT = tf.get_variable(
-            "parameters/tartarT", initializer=self.noise_initializer, trainable=False)
-        optimizer        self.tartarT = tf.get_variable(
-            "parameters/tartarT", initializer=self.noise_initializer, trainable=False)on.
-        summary_w        self.tartarT = tf.get_variable(
-            "parameters/tartarT", initializer=self.noise_initializer, trainable=False)tatistics.
-            Summa        self.tartarT = tf.get_variable(
-            "parameters/tartarT", initializer=self.noise_initializer, trainable=False)
-        summary_w        self.tartarT = tf.get_variable(
-            "parameters/tartarT", initializer=self.noise_initializer, trainable=False) will be
-            writt        self.tartarT = tf.get_variable(
-            "parameters/tartarT", initializer=self.noise_initializer, trainable=False)
+
         """
         assert isinstance(observation_shape, tuple)
         tf.logging.info('Creating %s agent with the following parameters:',
@@ -211,11 +198,11 @@ class SimpleBDQNAgent(object):
 
     @property
     def alpha_initializer(self):
-        return tf.cast(1*np.ones((self.num_actions)), dtype=tf.float32)
+        return tf.cast(np.ones((self.num_actions)), dtype=tf.float32)
 
     @property
     def beta_initializer(self):
-        return tf.cast(1*np.ones((self.num_actions)), dtype=tf.float32)
+        return tf.cast(np.ones((self.num_actions)), dtype=tf.float32)
 
     def _get_network_type(self):
         """Returns the type of the outputs of a BDQN value network.
@@ -351,43 +338,34 @@ class SimpleBDQNAgent(object):
             return priors
 
     def build_update_dataset_op(self):
-
         updates = [0]*self.num_actions
         for action in range(0, self.num_actions):
-            boolean_mask = tf.equal(self._replay.actions, action)
-            rewards = tf.boolean_mask(self._replay.rewards, boolean_mask)
-            terminals = tf.boolean_mask(
-                self._replay.terminals, boolean_mask)
-            state_q_encoding = tf.boolean_mask(
-                self._replay_net_outputs.encoding, boolean_mask)
-            next_state_q_encoding = tf.boolean_mask(
-                self._replay_next_target_net_outputs.encoding, boolean_mask)
 
-            num_samples = tf.reduce_sum(tf.cast(boolean_mask, tf.int32))
+            with tf.name_scope("BayesTarget"):
 
-            # replay_next_q_argmax = tf.one_hot(
-            #     tf.argmax(self.sample_weight_distributions(n=num_samples)@tf.stack([tf.transpose(next_state_q_encoding)]*self.num_actions,0)),
-            #               self.num_actions, name="argmax_next_q")
+                boolean_mask = tf.equal(self._replay.actions, action)
+                rewards = tf.boolean_mask(self._replay.rewards, boolean_mask)
+                terminals = tf.boolean_mask(
+                    self._replay.terminals, boolean_mask)
+                state_q_encoding = tf.boolean_mask(
+                    self._replay_net_outputs.encoding, boolean_mask)
+                next_state_q_encoding = tf.boolean_mask(
+                    self._replay_next_target_net_outputs.encoding, boolean_mask)
 
-            replay_next_q_values = []
-            weights = self.sample_weight_distributions(n=num_samples)
-            for a in range(self.num_actions):
-                replay_next_q_values.append(weights[a]*(next_state_q_encoding))
+                num_samples = tf.reduce_sum(tf.cast(boolean_mask, tf.int32))
 
-            replay_next_q_values = tf.stack(tf.reduce_sum(replay_next_q_values, axis=-1), axis=0)
 
-            replay_next_q_argmax = tf.one_hot(
-                tf.argmax(replay_next_q_values, axis=0),
-                          self.num_actions, name="argmax_next_q")    
-                
-            replay_next_qt_max = tf.reduce_sum(
-                tf.transpose(tf.matmul(self.mean, next_state_q_encoding,
-                                       transpose_b=True)) * replay_next_q_argmax,
-                axis=-1,
-                name='qt_max')
+                replay_next_q_values = []
+                weights = self.sample_weight_distributions(n=num_samples)
+                for a in range(self.num_actions):
+                    replay_next_q_values.append(weights[a]*(next_state_q_encoding))
 
-            target = rewards + self.cumulative_gamma * \
-                replay_next_qt_max * (1. - tf.cast(terminals, tf.float32))
+                replay_next_q_values = tf.stack(tf.reduce_sum(replay_next_q_values, axis=-1), axis=0)
+
+                replay_next_qt_max = tf.reduce_max(replay_next_q_values, axis=0, name="qt_max")    
+
+                target = rewards + self.cumulative_gamma * \
+                    replay_next_qt_max * (1. - tf.cast(terminals, tf.float32))
 
             updates[action] = self.add_data_to_action_dataset(
                 action, state_q_encoding, target)
@@ -395,31 +373,31 @@ class SimpleBDQNAgent(object):
         return updates
 
     def add_data_to_action_dataset(self, action, encoding, target):
+        with tf.name_scope("Update_Dataset"):
+            target = tf.reshape(target, [-1, 1], name="target")
+            phiphiT = self.phiphiT[action, :, :] + \
+                tf.matmul(encoding, encoding, transpose_a=True)
+            phiY = self.phiY[action, :, None] + \
+                tf.matmul(encoding, target, transpose_a=True)
+            tartarT = self.tartarT[action] + \
+                tf.matmul(target, target, transpose_a=True)
 
-        target = tf.reshape(target, [-1, 1], name="target")
-        phiphiT = self.phiphiT[action, :, :] + \
-            tf.matmul(encoding, encoding, transpose_a=True)
-        phiY = self.phiY[action, :, None] + \
-            tf.matmul(encoding, target, transpose_a=True)
-        tartarT = self.tartarT[action] + \
-            tf.matmul(target, target, transpose_a=True)
+            num_samples = self.num_samples[action] + \
+                tf.cast(tf.size(target), tf.float32)
 
-        num_samples = self.num_samples[action] + \
-            tf.cast(tf.size(target), tf.float32)
+            update = [tf.assign(self.phiphiT[action, :, :], phiphiT),
+                    tf.assign(self.phiY[action, :], tf.squeeze(phiY)),
+                    tf.assign(self.tartarT[action], tf.squeeze(tartarT)),
+                    tf.assign(self.num_samples[action], num_samples)]
 
-        update = [tf.assign(self.phiphiT[action, :, :], phiphiT),
-                  tf.assign(self.phiY[action, :], tf.squeeze(phiY)),
-                  tf.assign(self.tartarT[action], tf.squeeze(tartarT)),
-                  tf.assign(self.num_samples[action], num_samples)]
-
-        return update
+            return update
 
     def build_bayesian_regressor_op(self):
         with tf.name_scope("Bayes_Reg"):
             updates = []
             for a in range(0, self.num_actions):
                 inv_cov = self.phiphiT[a, :, :] + \
-                    tf.linalg.inv(tf.eye(self.encoding_size)*self.coef_var)
+                    tf.linalg.inv(self.cov_initializer[a,:,:])
                 cov = tf.linalg.inv(inv_cov)
                 mean = cov@self.phiY[a, :, None]
 
@@ -466,15 +444,12 @@ class SimpleBDQNAgent(object):
         Returns:
         target_q_op: An op calculating the Q-value.
         """
-        # Get the maximum Q-value across the actions dimension.
-        # replay_next_qt_max = tf.reduce_max(
-        #               self._replay_next_target_net_outputs.q_values,
-        #     axis=1)
         with tf.name_scope("Calc_Target"):
 
             replay_next_q_argmax = tf.one_hot(
-                tf.argmax(tf.matmul(
-                    self.sample_weight_distributions(), self._replay_next_net_outputs.encoding, transpose_b=True)), self.num_actions, name="argmax_next_q")
+                tf.argmax(tf.matmul(self.mean, self._replay_next_net_outputs.encoding,
+                                       transpose_b=True)),
+                self.num_actions, name="argmax_next_q")
 
             replay_next_qt_max = tf.reduce_sum(
                 tf.transpose(tf.matmul(self.mean, self._replay_next_target_net_outputs.encoding,
@@ -483,12 +458,12 @@ class SimpleBDQNAgent(object):
                 name='qt_max')
 
             qt = tf.matmul(self.mean,
-                           self._replay_next_target_net_outputs.encoding,
-                           transpose_b=True)
+                            self._replay_next_target_net_outputs.encoding,
+                            transpose_b=True)
 
             qs = tf.matmul(self.sample_weight_distributions(),
-                           self._replay_next_target_net_outputs.encoding,
-                           transpose_b=True)
+                            self._replay_next_target_net_outputs.encoding,
+                            transpose_b=True)
 
             tf.summary.scalar("sample_diff", tf.reduce_mean(qt-qs))
 
@@ -646,6 +621,7 @@ class SimpleBDQNAgent(object):
             # Retrain bayes reg
             if self.training_steps % self.target_update_period == 0:
                 self._sess.run([self._sync_qt_ops, self.reset_dataset_op])
+
                 training_iterations = int(min(
                     self._replay.memory.add_count, self.target_update_period*10)/self._replay.batch_size)
 
