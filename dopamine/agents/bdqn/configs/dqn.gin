@@ -16,13 +16,13 @@ BDQNAgent.target_update_period = 8000  # agent steps
 BDQNAgent.tf_device = '/cpu:0'  # use '/cpu:*' for non-GPU version
 BDQNAgent.optimizer = @tf.train.RMSPropOptimizer()
 
-tf.train.RMSPropOptimizer.learning_rate = 0.00025
+tf.train.RMSPropOptimizer.learning_rate = 0.0025
 tf.train.RMSPropOptimizer.decay = 0.95
 tf.train.RMSPropOptimizer.momentum = 0.0
 tf.train.RMSPropOptimizer.epsilon = 0.00001
 tf.train.RMSPropOptimizer.centered = True
 
-atari_lib.create_atari_environment.game_name = 'Pong'
+atari_lib.create_atari_environment.game_name = 'MontezumaRevenge'
 # Sticky actions with probability 0.25, as suggested by (Machado et al., 2017).
 atari_lib.create_atari_environment.sticky_actions = True
 create_agent.agent_name = 'simple_bdqn'
@@ -35,7 +35,7 @@ WrappedReplayBuffer.replay_capacity = 1000000
 WrappedReplayBuffer.batch_size = 32
 
 SimpleBDQNAgent.gamma = 0.99
-SimpleBDQNAgent.update_horizon = 1
+SimpleBDQNAgent.update_horizon = 150
 SimpleBDQNAgent.min_replay_history = 20000
 SimpleBDQNAgent.update_period = 4
 SimpleBDQNAgent.target_update_period = 8000

@@ -70,8 +70,8 @@ class SimpleBDQNAgent(object):
                      epsilon=0.00001,
                      centered=True),
                  summary_writer=None,
-                 summary_writing_frequency=10,
-                 coef_var=10000):
+                 summary_writing_frequency=500,
+                 coef_var=1):
         """Initializes the agent and constructs the components of its graph.
 
         Args:
@@ -183,8 +183,7 @@ class SimpleBDQNAgent(object):
             (self.num_actions, self.encoding_size, self.encoding_size))
         cov = np.eye(self.encoding_size)*self.coef_var
         for i in range(self.num_actions):
-            cov_decomp[i, :, :] = np.linalg.cholesky(
-                ((cov+np.transpose(cov))/2.))  # Whats going on here?
+            cov_decomp[i, :, :] = np.linalg.cholesky(cov)
 
         return tf.cast(cov_decomp, dtype=tf.float32)
 
@@ -202,7 +201,7 @@ class SimpleBDQNAgent(object):
 
     @property
     def beta_initializer(self):
-        return tf.cast(np.ones((self.num_actions)), dtype=tf.float32)
+        return tf.cast(np.ones((self.num_actions))*1e-6, dtype=tf.float32)
 
     def _get_network_type(self):
         """Returns the type of the outputs of a BDQN value network.
@@ -316,10 +315,12 @@ class SimpleBDQNAgent(object):
                 if self.summary_writer:
                     tf.summary.histogram(
                         str(a), noise_distribution.sample(1000), family="noise_dist")
+
                     sampled_weights = weight_distributions[a].sample(1000)
+                    
                     for weight in range(self.encoding_size):
                         tf.summary.histogram(
-                            str(weight), sampled_weights[weight, :], family="per_weight_dist")
+                            str(weight), sampled_weights[:, weight], family="per_weight_dist")
             noise_var = tf.squeeze(tf.stack(noise_var))
 
         return noise_var, weight_distributions
@@ -356,16 +357,17 @@ class SimpleBDQNAgent(object):
 
 
                 replay_next_q_values = []
+
                 weights = self.sample_weight_distributions(n=num_samples)
+
                 for a in range(self.num_actions):
                     replay_next_q_values.append(weights[a]*(next_state_q_encoding))
 
                 replay_next_q_values = tf.stack(tf.reduce_sum(replay_next_q_values, axis=-1), axis=0)
-
-                replay_next_qt_max = tf.reduce_max(replay_next_q_values, axis=0, name="qt_max")    
+                replay_next_q_max = tf.reduce_max(replay_next_q_values, axis=0, name="qt_max")    
 
                 target = rewards + self.cumulative_gamma * \
-                    replay_next_qt_max * (1. - tf.cast(terminals, tf.float32))
+                    replay_next_q_max * (1. - tf.cast(terminals, tf.float32))
 
             updates[action] = self.add_data_to_action_dataset(
                 action, state_q_encoding, target)
@@ -401,11 +403,13 @@ class SimpleBDQNAgent(object):
                 cov = tf.linalg.inv(inv_cov)
                 mean = cov@self.phiY[a, :, None]
 
-                cov_decomp = tf.linalg.cholesky((cov+tf.transpose(cov))/2.)
+                cov_decomp = tf.linalg.cholesky(cov)
 
-                alpha = 1 + tf.cast(self.num_samples[a]/2, tf.float32)
 
-                b = 1 + 0.5 *\
+                alpha = self.alpha_initializer[a] + \
+                    tf.cast(self.num_samples[a]/2, tf.float32)
+
+                b = self.beta_initializer[a] + 0.5*\
                     tf.squeeze(self.tartarT[a] -
                                tf.transpose(mean)@inv_cov@mean)
 

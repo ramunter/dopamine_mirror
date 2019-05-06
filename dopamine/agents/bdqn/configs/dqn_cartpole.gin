@@ -19,8 +19,6 @@ BDQNAgent.target_update_period = 100
 BDQNAgent.tf_device = '/gpu:0'  # use '/cpu:*' for non-GPU version
 BDQNAgent.optimizer = @tf.train.GradientDescentOptimizer()
 
-DQNAgent.optimizer = @tf.train.AdamOptimizer()
-
 tf.train.AdamOptimizer.learning_rate = 0.0007
 tf.train.AdamOptimizer.epsilon = 0.0003125
 
@@ -34,14 +32,14 @@ Runner.evaluation_steps = 1000
 Runner.max_steps_per_episode = 200  # Default max episode length.
 
 WrappedReplayBuffer.replay_capacity = 50000
-WrappedReplayBuffer.batch_size = 32
+WrappedReplayBuffer.batch_size = 512
 
 SimpleBDQNAgent.observation_shape = %gym_lib.CARTPOLE_OBSERVATION_SHAPE
 SimpleBDQNAgent.observation_dtype = %gym_lib.CARTPOLE_OBSERVATION_DTYPE
 SimpleBDQNAgent.stack_size = %gym_lib.CARTPOLE_STACK_SIZE
 SimpleBDQNAgent.network = @gym_lib.cartpole_bdqn_network
 SimpleBDQNAgent.gamma = 0.99
-SimpleBDQNAgent.update_horizon = 1
+SimpleBDQNAgent.update_horizon = 10
 SimpleBDQNAgent.min_replay_history = 1000
 SimpleBDQNAgent.update_period = 4
 SimpleBDQNAgent.target_update_period = 1000

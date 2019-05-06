@@ -327,7 +327,7 @@ class BDQNAgent(dqn_agent.DQNAgent):
 
             update_a = dist.a + tf.cast(tf.size(target)/2, tf.float32)
 
-            update_b = dist.b + 0.5 *\
+            update_b = dist.b + (dist.a-1)/dist.b*0.5 *\
                 tf.squeeze(tf.transpose(target)@target +
                            tf.transpose(dist.mean)@dist.inv_cov@dist.mean -
                            tf.transpose(update_mu)@update_inv_cov@update_mu)
