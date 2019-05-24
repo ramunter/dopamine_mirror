@@ -4,7 +4,6 @@
 import dopamine.discrete_domains.atari_lib
 import dopamine.discrete_domains.run_experiment
 import dopamine.agents.bdqn.bdqn_agent
-import dopamine.agents.bdqn.simple_bdqn_agent
 import dopamine.replay_memory.circular_replay_buffer
 import gin.tf.external_configurables
 
@@ -17,7 +16,7 @@ tf.train.RMSPropOptimizer.centered = True
 atari_lib.create_atari_environment.game_name = 'Asteroids'
 # Sticky actions with probability 0.25, as suggested by (Machado et al., 2017).
 atari_lib.create_atari_environment.sticky_actions = True
-create_agent.agent_name = 'simple_bdqn'
+create_agent.agent_name = 'bdqn'
 Runner.num_iterations = 200
 Runner.training_steps = 250000  # agent steps
 Runner.evaluation_steps = 50000  # agent steps

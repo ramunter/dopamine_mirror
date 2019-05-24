@@ -91,7 +91,6 @@ def create_agent(sess, environment, agent_name=None, summary_writer=None,
     elif agent_name == 'bdqn':
         return bdqn_agent.BDQNAgent(sess, num_actions=environment.action_space.n,
                                     summary_writer=summary_writer)
-                                                 summary_writer=summary_writer)
     elif agent_name == 'kdqn':
         return kdqn_agent.KDQNAgent(sess, num_actions=environment.action_space.n,
                                     summary_writer=summary_writer)

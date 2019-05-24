@@ -3,7 +3,6 @@
 import dopamine.discrete_domains.gym_lib
 import dopamine.discrete_domains.run_experiment
 import dopamine.agents.bdqn.bdqn_agent
-import dopamine.agents.bdqn.simple_bdqn_agent
 import dopamine.replay_memory.circular_replay_buffer
 import gin.tf.external_configurables
 
@@ -12,7 +11,7 @@ tf.train.AdamOptimizer.epsilon = 0.0003125
 
 create_gym_environment.environment_name = 'CartPole'
 create_gym_environment.version = 'v0'
-create_agent.agent_name = 'simple_bdqn'
+create_agent.agent_name = 'bdqn'
 Runner.create_environment_fn = @gym_lib.create_gym_environment
 Runner.num_iterations = 500
 Runner.training_steps = 1000
@@ -20,14 +19,14 @@ Runner.evaluation_steps = 1000
 Runner.max_steps_per_episode = 200  # Default max episode length.
 
 WrappedReplayBuffer.replay_capacity = 50000
-WrappedReplayBuffer.batch_size = 512
+WrappedReplayBuffer.batch_size = 32
 
 BDQNAgent.observation_shape = %gym_lib.CARTPOLE_OBSERVATION_SHAPE
 BDQNAgent.observation_dtype = %gym_lib.CARTPOLE_OBSERVATION_DTYPE
 BDQNAgent.stack_size = %gym_lib.CARTPOLE_STACK_SIZE
 BDQNAgent.network = @gym_lib.cartpole_bdqn_network
 BDQNAgent.gamma = 0.99
-BDQNAgent.update_horizon = 10
+BDQNAgent.update_horizon = 1
 BDQNAgent.min_replay_history = 1000
 BDQNAgent.update_period = 4
 BDQNAgent.target_update_period = 1000

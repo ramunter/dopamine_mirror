@@ -71,7 +71,8 @@ class BDQNAgent(object):
                      centered=True),
                  summary_writer=None,
                  summary_writing_frequency=500,
-                 coef_var=1):
+                 coef_var=1,
+                 lr=0.01):
         """Initializes the agent and constructs the components of its graph.
 
         Args:
@@ -136,6 +137,8 @@ class BDQNAgent(object):
         self.summary_writing_frequency = summary_writing_frequency
 
         self.coef_var = coef_var
+        self.lr = lr
+
         with tf.device(tf_device):
             # Create a placeholder for the state input to the DQN network.
             # The last axis indicates the number of consecutive frames stacked.
@@ -147,6 +150,7 @@ class BDQNAgent(object):
 
             self._build_networks()
             self._train_op = self._build_train_op()
+            self._train_bayes_op = self._build_train_bayes_op()
             self._sync_qt_ops = self._build_sync_op()
 
         if self.summary_writer is not None:
@@ -186,14 +190,6 @@ class BDQNAgent(object):
             cov_decomp[i, :, :] = np.linalg.cholesky(cov)
 
         return tf.cast(cov_decomp, dtype=tf.float32)
-
-    @property
-    def phiphiT_initializer(self):
-        return tf.cast(np.zeros((self.num_actions, self.encoding_size, self.encoding_size)), dtype=tf.float32)
-
-    @property
-    def phiY_initializer(self):
-        return tf.cast(np.zeros((self.num_actions, self.encoding_size)), dtype=tf.float32)
 
     @property
     def alpha_initializer(self):
@@ -243,11 +239,7 @@ class BDQNAgent(object):
         self.target_convnet = tf.make_template(
             'Target', self._network_template)
         self._net_outputs = self.online_convnet(self.state_ph)
-        # TODO(bellemare): Ties should be broken. They are unlikely to happen when
-        # using a deep network, but may affect performance with a linear
-        # approximation scheme.
 
-        # Build bayes reg variables
 
         self.encoding_size = int(self._net_outputs.encoding.get_shape()[1])
 
@@ -266,15 +258,21 @@ class BDQNAgent(object):
                 loc=[0]*self.num_actions, scale_diag=self.noise_var).sample(1),
             name="Sample_Q")[0]
 
+
+        self._weight_samples = self.sample_weight_distributions()
+        self._deep_sample_q_argmax = tf.argmax(
+            tf.matmul(self._weight_samples,
+                      self._net_outputs.encoding, transpose_b=True) +
+            tfd.MultivariateNormalDiag(
+                loc=[0]*self.num_actions, scale_diag=self.noise_var).sample(1),
+            name="Deep_Sample_Q")[0]
+
+
         self._replay_net_outputs = self.online_convnet(self._replay.states)
         self._replay_next_target_net_outputs = self.target_convnet(
             self._replay.next_states)
         self._replay_next_net_outputs = self.online_convnet(
             self._replay.next_states)
-
-        self.reset_dataset_op = self.build_reset_dataset_op()
-        self.update_dataset_op = self.build_update_dataset_op()
-        self.bayes_reg_op = self.build_bayesian_regressor_op()
 
     def init_bayes_reg_params(self):
         self.mean = tf.get_variable(
@@ -283,18 +281,10 @@ class BDQNAgent(object):
             "parameters/cov", initializer=self.cov_initializer, trainable=False)
         self.cov_decomp = tf.get_variable(
             "parameters/cov_decomp", initializer=self.cov_decomp_initializer, trainable=False)
-        self.phiphiT = tf.get_variable(
-            "parameters/phiphiT", initializer=self.phiphiT_initializer, trainable=False)
-        self.phiY = tf.get_variable(
-            "parameters/phiY", initializer=self.phiY_initializer, trainable=False)
         self.a = tf.get_variable(
             "parameters/alpha", initializer=self.alpha_initializer, trainable=False)
         self.b = tf.get_variable(
             "parameters/beta", initializer=self.beta_initializer, trainable=False)
-        self.tartarT = tf.get_variable(
-            "parameters/tartarT", initializer=tf.cast(np.zeros((self.num_actions,)), dtype=tf.float32), trainable=False)
-        self.num_samples = tf.get_variable(
-            "parameters/num_samples", initializer=tf.cast(np.zeros((self.num_actions,)), dtype=tf.float32), trainable=False)
 
     def build_regression_distributions(self):
         with tf.name_scope("Sample_Weights"):
@@ -324,108 +314,6 @@ class BDQNAgent(object):
             noise_var = tf.squeeze(tf.stack(noise_var))
 
         return noise_var, weight_distributions
-
-    def build_reset_dataset_op(self):
-        with tf.name_scope("Reset_Priors"):
-            priors = []
-            priors.append(
-                tf.assign(self.phiphiT, value=self.phiphiT_initializer, validate_shape=True))
-            priors.append(
-                tf.assign(self.phiY, value=self.phiY_initializer, validate_shape=True))
-            priors.append(
-                tf.assign(self.tartarT, value=tf.cast(np.zeros((self.num_actions,)), dtype=tf.float32), validate_shape=True))
-            priors.append(
-                tf.assign(self.num_samples, value=tf.cast(np.zeros((self.num_actions,)), dtype=tf.float32), validate_shape=True))
-            return priors
-
-    def build_update_dataset_op(self):
-        updates = [0]*self.num_actions
-        for action in range(0, self.num_actions):
-
-            with tf.name_scope("BayesTarget"):
-
-                boolean_mask = tf.equal(self._replay.actions, action)
-                rewards = tf.boolean_mask(self._replay.rewards, boolean_mask)
-                terminals = tf.boolean_mask(
-                    self._replay.terminals, boolean_mask)
-                state_q_encoding = tf.boolean_mask(
-                    self._replay_net_outputs.encoding, boolean_mask)
-                next_state_q_encoding = tf.boolean_mask(
-                    self._replay_next_target_net_outputs.encoding, boolean_mask)
-
-                num_samples = tf.reduce_sum(tf.cast(boolean_mask, tf.int32))
-
-
-                replay_next_q_values = []
-
-                weights = self.sample_weight_distributions(n=num_samples)
-
-                for a in range(self.num_actions):
-                    replay_next_q_values.append(weights[a]*(next_state_q_encoding))
-
-                replay_next_q_values = tf.stack(tf.reduce_sum(replay_next_q_values, axis=-1), axis=0)
-                replay_next_q_max = tf.reduce_max(replay_next_q_values, axis=0, name="qt_max")    
-
-                target = rewards + self.cumulative_gamma * \
-                    replay_next_q_max * (1. - tf.cast(terminals, tf.float32))
-
-            updates[action] = self.add_data_to_action_dataset(
-                action, state_q_encoding, target)
-
-        return updates
-
-    def add_data_to_action_dataset(self, action, encoding, target):
-        with tf.name_scope("Update_Dataset"):
-            target = tf.reshape(target, [-1, 1], name="target")
-            phiphiT = self.phiphiT[action, :, :] + \
-                tf.matmul(encoding, encoding, transpose_a=True)
-            phiY = self.phiY[action, :, None] + \
-                tf.matmul(encoding, target, transpose_a=True)
-            tartarT = self.tartarT[action] + \
-                tf.matmul(target, target, transpose_a=True)
-
-            num_samples = self.num_samples[action] + \
-                tf.cast(tf.size(target), tf.float32)
-
-            update = [tf.assign(self.phiphiT[action, :, :], phiphiT),
-                    tf.assign(self.phiY[action, :], tf.squeeze(phiY)),
-                    tf.assign(self.tartarT[action], tf.squeeze(tartarT)),
-                    tf.assign(self.num_samples[action], num_samples)]
-
-            return update
-
-    def build_bayesian_regressor_op(self):
-        with tf.name_scope("Bayes_Reg"):
-            updates = []
-            for a in range(0, self.num_actions):
-                inv_cov = self.phiphiT[a, :, :] + tf.linalg.inv(self.cov_initializer[a,:,:])
-                cov = tf.linalg.inv(inv_cov)
-                mean = cov@(self.phiY[a, :, None] + 
-                         tf.linalg.inv(self.cov_initializer[a,:,:])@self.mean[a,:, None])
-
-                cov_decomp = tf.linalg.cholesky(cov)
-
-                alpha = self.alpha_initializer[a] + \
-                    tf.cast(self.num_samples[a]/2, tf.float32)
-
-                b = self.beta_initializer[a] + 0.5*\
-                    tf.squeeze(self.tartarT[a] -
-                               tf.transpose(mean)@inv_cov@mean + 
-                               tf.transpose(self.mean[a,:,None])@
-                                tf.linalg.inv(self.cov_initializer[a,:,:])@self.mean[a,:,None])
-                
-                b = tf.maximum(b, 1e-12)
-
-                tf.summary.scalar(str(a), alpha, family="alpha")
-                tf.summary.scalar(str(a), b, family="beta")
-
-                updates.append([tf.assign(self.mean[a, :], tf.squeeze(mean)),
-                                tf.assign(self.cov[a, :, :], cov),
-                                tf.assign(
-                                    self.cov_decomp[a, :, :], cov_decomp),
-                                tf.assign(self.a[a], alpha),
-                                tf.assign(self.b[a], b)])
-        return updates
 
     def _build_replay_buffer(self, use_staging):
         """Creates the replay buffer used by the agent.
@@ -511,7 +399,74 @@ class BDQNAgent(object):
 
             if self.summary_writer is not None:
                 tf.summary.scalar('HuberLoss', tf.reduce_mean(loss))
+
             return self.optimizer.minimize(tf.reduce_mean(loss))
+
+    def _build_train_bayes_op(self):
+        """Builds a training op.
+
+        Returns:
+        train_op: An op performing one step of training from replay data.
+        """
+        train_ops = []
+        with tf.name_scope("BNIG"):
+        
+            with tf.name_scope("sample_target"):
+                replay_next_q_values = []
+                weights = self.sample_weight_distributions(n=self._replay.batch_size)
+                for a in range(self.num_actions):
+                    replay_next_q_values.append(self._replay_next_target_net_outputs.encoding@tf.transpose(weights[a]))
+                replay_next_q_values = tf.stack(tf.reduce_sum(replay_next_q_values, axis=-1), axis=0)
+                
+                replay_next_q_max = tf.reduce_max(replay_next_q_values, axis=0, name="qt_max")
+
+                all_targets = self._replay.rewards + self.cumulative_gamma * \
+                    replay_next_q_max * (1. - tf.cast(self._replay.terminals, tf.float32))
+
+            for action in range(0, self.num_actions):
+                with tf.name_scope("posterior_update"):
+                    
+                    # Filter relevant data for action
+                    boolean_mask = tf.equal(self._replay.actions, action)
+                    state_encoding = tf.boolean_mask(
+                        self._replay_net_outputs.encoding, boolean_mask)
+                    target = tf.boolean_mask(all_targets, boolean_mask)
+                    num_samples = tf.reduce_sum(tf.cast(boolean_mask, tf.int32))
+
+                    train_ops.append(self.build_bayesian_regressor_op(action, state_encoding, target[:, None], num_samples))
+
+        return train_ops
+
+    def build_bayesian_regressor_op(self, a, X, y, n):
+
+            inv_cov = self.lr*tf.transpose(X)@X + tf.linalg.inv(self.cov[a,:,:])
+            cov = tf.linalg.inv(inv_cov)
+
+            # print_op = tf.print("Isnan", tf.reduce_any(tf.is_nan(cov)), " ", "IsInf", tf.reduce_any(tf.is_inf(cov)))
+
+            mean = cov@(self.lr*tf.transpose(X)@y + 
+                        tf.linalg.inv(self.cov[a,:,:])@self.mean[a,:, None])
+
+            cov_decomp = tf.linalg.cholesky(cov)
+
+
+            alpha = self.a[a] + \
+                self.lr*tf.cast(n/2, tf.float32)
+
+            b = self.b[a] + self.lr**2*0.5*\
+                tf.squeeze(tf.transpose(y)@y -
+                            tf.transpose(mean)@inv_cov@mean + 
+                            tf.transpose(self.mean[a,:,None])@
+                            tf.linalg.inv(self.cov[a,:,:])@self.mean[a,:,None])
+            
+            tf.summary.scalar(str(a), alpha, family="alpha")
+            tf.summary.scalar(str(a), b, family="beta")
+
+            return  [tf.assign(self.mean[a, :], tf.squeeze(mean)),
+                    tf.assign(self.cov[a, :, :], cov),
+                    tf.assign(self.cov_decomp[a, :, :], cov_decomp),
+                    tf.assign(self.a[a], alpha),
+                    tf.assign(self.b[a], b)]
 
     def _build_sync_op(self):
         """Builds ops for assigning weights from online to target network.
@@ -541,6 +496,8 @@ class BDQNAgent(object):
         """
         self._reset_state()
         self._record_observation(observation)
+
+        self._weight_samples = self.sample_weight_distributions()
 
         if not self.eval_mode:
             self._train_step()
@@ -626,18 +583,13 @@ class BDQNAgent(object):
                     self.summary_writer.add_summary(
                         summary, self.training_steps)
 
+            # if self.training_steps % self._replay.batch_size:
+            #     self._sess.run(self._train_bayes_op)
+
             # Retrain bayes reg
             if self.training_steps % self.target_update_period == 0:
                 
-                self._sess.run([self._sync_qt_ops, self.reset_dataset_op])
-
-                training_iterations = int(min(
-                    self._replay.memory.add_count, 20000)/self._replay.batch_size)
-
-                for _ in range(training_iterations):
-                    self._sess.run(self.update_dataset_op)
-
-                self._sess.run(self.bayes_reg_op)
+                self._sess.run([self._sync_qt_ops])
 
         self.training_steps += 1
 
