@@ -201,7 +201,7 @@ class SimpleBDQNAgent(object):
 
     @property
     def beta_initializer(self):
-        return tf.cast(np.ones((self.num_actions))*1e-6, dtype=tf.float32)
+        return tf.cast(np.ones((self.num_actions))*1e-3, dtype=tf.float32)
 
     def _get_network_type(self):
         """Returns the type of the outputs of a BDQN value network.
@@ -398,22 +398,25 @@ class SimpleBDQNAgent(object):
         with tf.name_scope("Bayes_Reg"):
             updates = []
             for a in range(0, self.num_actions):
-                inv_cov = self.phiphiT[a, :, :] + \
-                    tf.linalg.inv(self.cov_initializer[a,:,:])
+                inv_cov = self.phiphiT[a, :, :] + tf.linalg.inv(self.cov_initializer[a,:,:])
                 cov = tf.linalg.inv(inv_cov)
-                mean = cov@self.phiY[a, :, None]
+                mean = cov@(self.phiY[a, :, None] + 
+                         tf.linalg.inv(self.cov_initializer[a,:,:])@self.mean[a,:, None])
 
                 cov_decomp = tf.linalg.cholesky(cov)
-
 
                 alpha = self.alpha_initializer[a] + \
                     tf.cast(self.num_samples[a]/2, tf.float32)
 
                 b = self.beta_initializer[a] + 0.5*\
                     tf.squeeze(self.tartarT[a] -
-                               tf.transpose(mean)@inv_cov@mean)
+                               tf.transpose(mean)@inv_cov@mean + 
+                               tf.transpose(self.mean[a,:,None])@
+                                tf.linalg.inv(self.cov_initializer[a,:,:])@self.mean[a,:,None])
+                
+                b = tf.maximum(b, 1e-12)
 
-                tf.summary.scalar(str(a), alpha,  family="alpha")
+                tf.summary.scalar(str(a), alpha, family="alpha")
                 tf.summary.scalar(str(a), b, family="beta")
 
                 updates.append([tf.assign(self.mean[a, :], tf.squeeze(mean)),
@@ -619,15 +622,17 @@ class SimpleBDQNAgent(object):
                     self.training_steps > 0 and
                         self.training_steps % self.summary_writing_frequency == 0):
                     summary = self._sess.run(self._merged_summaries)
+
                     self.summary_writer.add_summary(
                         summary, self.training_steps)
 
             # Retrain bayes reg
             if self.training_steps % self.target_update_period == 0:
+                
                 self._sess.run([self._sync_qt_ops, self.reset_dataset_op])
 
                 training_iterations = int(min(
-                    self._replay.memory.add_count, self.target_update_period*10)/self._replay.batch_size)
+                    self._replay.memory.add_count, 20000)/self._replay.batch_size)
 
                 for _ in range(training_iterations):
                     self._sess.run(self.update_dataset_op)
