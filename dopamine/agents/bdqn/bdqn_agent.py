@@ -23,7 +23,6 @@ import math
 import os
 import random
 
-from dopamine.agents.dqn import dqn_agent
 from dopamine.discrete_domains import atari_lib
 from dopamine.replay_memory import circular_replay_buffer
 import numpy as np
@@ -35,22 +34,17 @@ import gin.tf
 slim = tf.contrib.slim
 tfd = tfp.distributions
 
-
 # These are aliases which are used by other classes.
 NATURE_DQN_OBSERVATION_SHAPE = atari_lib.NATURE_DQN_OBSERVATION_SHAPE
 NATURE_DQN_DTYPE = atari_lib.NATURE_DQN_DTYPE
 NATURE_DQN_STACK_SIZE = atari_lib.NATURE_DQN_STACK_SIZE
-bayesian_dqn_network = atari_lib.bayesian_dqn_network
+nature_bdqn_network = atari_lib.bayesian_dqn_network
 
-Dist = collections.namedtuple(
-    'Dist', ['mean', 'inv_cov', 'a', 'b'])
-
-Parameters = collections.namedtuple(
-    'Parameters', ['coef', 'noise'])
+np.set_printoptions(precision=3)
 
 
 @gin.configurable
-class BDQNAgent(dqn_agent.DQNAgent):
+class BDQNAgent(object):
     """An implementation of the DQN agent."""
 
     def __init__(self,
@@ -59,12 +53,13 @@ class BDQNAgent(dqn_agent.DQNAgent):
                  observation_shape=atari_lib.NATURE_DQN_OBSERVATION_SHAPE,
                  observation_dtype=atari_lib.NATURE_DQN_DTYPE,
                  stack_size=atari_lib.NATURE_DQN_STACK_SIZE,
-                 network=bayesian_dqn_network,
+                 network=atari_lib.bayesian_dqn_network,
                  gamma=0.99,
                  update_horizon=1,
                  min_replay_history=20000,
                  update_period=4,
                  target_update_period=8000,
+                 sample_weight_period=8000,
                  tf_device='/cpu:*',
                  use_staging=True,
                  max_tf_checkpoints_to_keep=4,
@@ -76,345 +71,540 @@ class BDQNAgent(dqn_agent.DQNAgent):
                      centered=True),
                  summary_writer=None,
                  summary_writing_frequency=500,
-                 bayes_update_period=1000):
+                 coef_var=1):
         """Initializes the agent and constructs the components of its graph.
 
         Args:
-          sess: `tf.Session`, for executing ops.
-          num_actions: int, number of actions the agent can take at any state.
-          observation_shape: tuple of ints describing the observation shape.
-          observation_dtype: tf.DType, specifies the type of the observations. Note
+        sess: `tf.Session`, for executing ops.
+        num_actions: int, number of actions the agent can take at any state.
+        observation_shape: tuple of ints describing the observation shape.
+        observation_dtype: tf.DType, specifies the type of the observations. Note
             that if your inputs are continuous, you should set this to tf.float32.
-          stack_size: int, number of frames to use in state stack.
-          network: function expecting three parameters:
+        stack_size: int, number of frames to use in state stack.
+        network: function expecting three parameters:
             (num_actions, network_type, state). This function will return the
             network_type object containing the tensors output by the network.
             See dopamine.discrete_domains.atari_lib.nature_dqn_network as
             an example.
-          gamma: float, discount factor with the usual RL meaning.
-          update_horizon: int, horizon at which updates are performed, the 'n' in
+        gamma: float, discount factor with the usual RL meaning.
+        update_horizon: int, horizon at which updates are performed, the 'n' in
             n-step update.
-          min_replay_history: int, number of transitions that should be experienced
+        min_replay_history: int, number of transitions that should be experienced
             before the agent begins training its value function.
-          update_period: int, period between DQN updates.
-          target_update_period: int, update period for the target network.
-          epsilon_fn: function expecting 4 parameters:
+        update_period: int, period between DQN updates.
+        target_update_period: int, update period for the target network.
+        epsilon_fn: function expecting 4 parameters:
             (decay_period, step, warmup_steps, epsilon). This function should return
             the epsilon value used for exploration during training.
-          epsilon_train: float, the value to which the agent's epsilon is eventually
+        epsilon_train: float, the value to which the agent's epsilon is eventually
             decayed during training.
-          epsilon_eval: float, epsilon used when evaluating the agent.
-          epsilon_decay_period: int, length of the epsilon decay schedule.
-          tf_device: str, Tensorflow device on which the agent's graph is executed.
-          use_staging: bool, when True use a staging area to prefetch the next
+        epsilon_eval: float, epsilon used when evaluating the agent.
+        epsilon_decay_period: int, length of the epsilon decay schedule.
+        tf_device: str, Tensorflow device on which the agent's graph is executed.
+        use_staging: bool, when True use a staging area to prefetch the next
             training batch, speeding training up by about 30%.
-          max_tf_checkpoints_to_keep: int, the number of TensorFlow checkpoints to
-            keep.
-          optimizer: `tf.train.Optimizer`, for training the value function.
-          summary_writer: SummaryWriter object for outputting training statistics.
-            Summary writing disabled if set to None.
-          summary_writing_frequency: int, frequency with which summaries will be
-            written. Lower values will result in slower training.
+
         """
-        self._bayes_update_period = bayes_update_period
+        assert isinstance(observation_shape, tuple)
+        tf.logging.info('Creating %s agent with the following parameters:',
+                        self.__class__.__name__)
+        tf.logging.info('\t gamma: %f', gamma)
+        tf.logging.info('\t update_horizon: %f', update_horizon)
+        tf.logging.info('\t min_replay_history: %d', min_replay_history)
+        tf.logging.info('\t update_period: %d', update_period)
+        tf.logging.info('\t target_update_period: %d', target_update_period)
+        tf.logging.info('\t tf_device: %s', tf_device)
+        tf.logging.info('\t use_staging: %s', use_staging)
+        tf.logging.info('\t optimizer: %s', optimizer)
 
-        super().__init__(
-            sess=sess,
-            num_actions=num_actions,
-            observation_shape=observation_shape,
-            observation_dtype=observation_dtype,
-            stack_size=stack_size,
-            network=network,
-            gamma=gamma,
-            update_horizon=update_horizon,
-            min_replay_history=min_replay_history,
-            update_period=update_period,
-            target_update_period=target_update_period,
-            tf_device=tf_device,
-            use_staging=use_staging,
-            optimizer=optimizer,
-            summary_writer=summary_writer,
-            summary_writing_frequency=summary_writing_frequency)
+        self.num_actions = num_actions
+        self.observation_shape = tuple(observation_shape)
+        self.observation_dtype = observation_dtype
+        self.stack_size = stack_size
+        self.network = network
+        self.gamma = gamma
+        self.update_horizon = update_horizon
+        self.cumulative_gamma = math.pow(gamma, update_horizon)
+        self.min_replay_history = min_replay_history
+        self.target_update_period = target_update_period
+        self.update_period = update_period
+        self.sample_weight_period = sample_weight_period
+        self.eval_mode = False
+        self.training_steps = 0
+        self.optimizer = optimizer
+        self.summary_writer = summary_writer
+        self.summary_writing_frequency = summary_writing_frequency
 
-        self._build_bayes_network()
-        self._update_bayes_op = self._build_update_bayes_op()
+        self.coef_var = coef_var
+        with tf.device(tf_device):
+            # Create a placeholder for the state input to the DQN network.
+            # The last axis indicates the number of consecutive frames stacked.
+            state_shape = (1,) + self.observation_shape + (stack_size,)
+            self.state = np.zeros(state_shape)
+            self.state_ph = tf.placeholder(self.observation_dtype, state_shape,
+                                           name='state_ph')
+            self._replay = self._build_replay_buffer(use_staging)
 
-        self._train_op = self._rebuild_train_op()
+            self._build_networks()
+            self._train_op = self._build_train_op()
+            self._sync_qt_ops = self._build_sync_op()
+
         if self.summary_writer is not None:
+            # All tf.summaries should have been defined prior to running this.
             self._merged_summaries = tf.summary.merge_all()
 
-        print("===========")
-        print(self._replay.memory._batch_size)
+        self._sess = sess
+        self._saver = tf.train.Saver(max_to_keep=max_tf_checkpoints_to_keep)
+
+        # Variables to be initialized by the agent once it interacts with the
+        # environment.
+        self._observation = None
+        self._last_observation = None
+
+    @property
+    def mean_initializer(self):
+        return tf.cast(np.zeros((self.num_actions, self.encoding_size)), dtype=tf.float32)
+
+    @property
+    def weights_initializer(self):
+        return tf.cast(np.zeros((self.num_actions, self.encoding_size)), dtype=tf.float32)
+
+    @property
+    def cov_initializer(self):
+        cov = np.zeros(
+            (self.num_actions, self.encoding_size, self.encoding_size))
+        for i in range(self.num_actions):
+            cov[i, :, :] = np.eye(self.encoding_size)*self.coef_var
+        return tf.cast(cov, dtype=tf.float32)
+
+    @property
+    def cov_decomp_initializer(self):
+        cov_decomp = np.zeros(
+            (self.num_actions, self.encoding_size, self.encoding_size))
+        cov = np.eye(self.encoding_size)*self.coef_var
+        for i in range(self.num_actions):
+            cov_decomp[i, :, :] = np.linalg.cholesky(cov)
+
+        return tf.cast(cov_decomp, dtype=tf.float32)
+
+    @property
+    def phiphiT_initializer(self):
+        return tf.cast(np.zeros((self.num_actions, self.encoding_size, self.encoding_size)), dtype=tf.float32)
+
+    @property
+    def phiY_initializer(self):
+        return tf.cast(np.zeros((self.num_actions, self.encoding_size)), dtype=tf.float32)
+
+    @property
+    def alpha_initializer(self):
+        return tf.cast(np.ones((self.num_actions)), dtype=tf.float32)
+
+    @property
+    def beta_initializer(self):
+        return tf.cast(np.ones((self.num_actions))*1e-3, dtype=tf.float32)
 
     def _get_network_type(self):
         """Returns the type of the outputs of a BDQN value network.
         Returns:
           net_type: _network_type object defining the outputs of the network.
         """
-        return collections.namedtuple('BDQN_network', ['q_values', 'encoding', ])
+        return collections.namedtuple('BDQN_network', ['encoding'])
 
-    def _build_dist(self, size, action):
-        mu = tf.get_variable("dist_mean"+str(action), initializer=tf.cast(
-            np.zeros((size, 1)), dtype=tf.float32))
-        inv_cov = tf.get_variable("dist_invcov"+str(action), initializer=tf.cast(
-            np.eye(size)*10, dtype=tf.float32))
-        b = tf.get_variable(
-            "dist_b"+str(action), initializer=tf.cast(0.1, dtype=tf.float32))
-        a = tf.get_variable(
-            "dist_a"+str(action), initializer=tf.cast(10, dtype=tf.float32))
-        dist = Dist(mu, inv_cov, a, b)
-        return dist
+    def _network_template(self, state):
+        """Builds the convolutional network used to compute the agent's Q-values.
 
-    def _build_reset_priors_op(self):
-        updates = [0]*self.num_actions
-        for i in range(0, self.num_actions):
-            updates[i] = Dist(self._dists[i].mean.assign(self.prior_0.mean),
-                              self._dists[i].inv_cov.assign(
-                                  self.prior_0.inv_cov),
-                              self._dists[i].a.assign(self.prior_0.a),
-                              self._dists[i].b.assign(self.prior_0.b))
-
-        return updates
-
-    def _build_parameters(self, size, action):
-        reg_coef = tf.get_variable("reg_coef"+str(action), initializer=tf.cast(
-            np.zeros((1, size)), dtype=tf.float32))
-        noise_var = tf.get_variable(
-            "noise_coef"+str(action), initializer=tf.cast(0.0, dtype=tf.float32))
-        parameters = Parameters(reg_coef, noise_var)
-        return parameters
-
-    def _build_sample_coef_op(self):
-        update_tensor = [0]*self.num_actions*2
-        for action in range(0, self.num_actions):
-
-            dist = self._dists[action]
-
-            # Sample noise variance
-            var_dist = tfd.InverseGamma(
-                concentration=dist.a, rate=dist.b)
-            var_sample = var_dist.sample(1)
-
-            # Sample coefficients
-            # tril = tf.linalg.inv(tf.cholesky(dist.inv_cov))
-            tril = tf.linalg.inv(tf.cholesky((1/var_sample)*dist.inv_cov))
-            coef_dist = tfd.MultivariateNormalTriL(
-                loc=tf.reshape(dist.mean, [-1]), scale_tril=tril)
-            coef_sample = coef_dist.sample(1)
-            update_tensor[action] = self._parameters[action].coef.assign(
-                coef_sample)
-            update_tensor[self.num_actions+action] = self._parameters[action].noise.assign(
-                tf.squeeze(var_sample))
-
-        return update_tensor
-
-    def _build_bayes_network(self):
-        """Creates the bayes dists for each actors and connects bayesian regression
-        to the DQN.
+        Args:
+        state: `tf.Tensor`, contains the agent's current state.
+        Returns:
+            net: _network_type object containing the tensors output by the network.
         """
-        # Setup bayesian dists
-        # with tf.variable_scope("Bayes"):
-        self._dists = [0]*self.num_actions
-        self._parameters = [0]*self.num_actions
-        encoding_size = self._net_outputs.encoding.get_shape()[1]
-        for i in range(0, self.num_actions):
-            self._dists[i] = self._build_dist(encoding_size, i)
-            self._parameters[i] = self._build_parameters(encoding_size, i)
+        return self.network(self.num_actions, self._get_network_type(), state)
 
-        self.prior_0 = self._build_dist(encoding_size, -1)
-        self._reset_priors_op = self._build_reset_priors_op()
+    def sample_weight_distributions(self, n=1):
+        return tf.stack([tf.squeeze(dist.sample(n)) for dist in self.weight_distributions], axis=0)
 
-        # Sampler
-        self._sample_coef_op = self._build_sample_coef_op()
+    def _build_networks(self):
+        """Builds the Q-value network computations needed for acting and training.
 
-        # Action Selection
-        # with tf.variable_scope('Online_Actions'):
+        These are:
+        self.online_convnet: For computing the current state's Q-values.
+        self.target_convnet: For computing the next state's target Q-values.
+        self._net_outputs: The actual Q-values.
+        self._q_argmax: The action maximizing the current state's Q-values.
+        self._replay_net_outputs: The replayed states' Q-values.
+        self._replay_next_target_net_outputs: The replayed next states' target
+            Q-values (see Mnih et al., 2015 for details).
+        """
+        # Calling online_convnet will generate a new graph as defined in
+        # self._get_network_template using whatever input is passed, but will always
+        # share the same weights.
+        self.online_convnet = tf.make_template(
+            'Online', self._network_template)
+        self.target_convnet = tf.make_template(
+            'Target', self._network_template)
+        self._net_outputs = self.online_convnet(self.state_ph)
+        # TODO(bellemare): Ties should be broken. They are unlikely to happen when
+        # using a deep network, but may affect performance with a linear
+        # approximation scheme.
+
+        # Build bayes reg variables
+
+        self.encoding_size = int(self._net_outputs.encoding.get_shape()[1])
+
+        self.init_bayes_reg_params()
+
+        self.noise_var, self.weight_distributions = self.build_regression_distributions()
+
         self._q_argmax = tf.argmax(
-            self.samples_per_action(self._net_outputs.encoding), axis=0)
-        self._q_values = self.samples_per_action(self._net_outputs.encoding)
-        # Replay Setup
-        # with tf.variable_scope('Bayes_Replay'):
-        self._replay_target_net_outputs = self.target_convnet(
-            self._replay.states)
-        self._sample_replay_next_q_max = tf.reduce_max(
-            self.samples_per_action(self._replay_next_target_net_outputs.encoding), axis=0)
+            tf.matmul(self.mean, self._net_outputs.encoding,
+                      transpose_b=True), name="Mean_Q")[0]
 
-    def bayesian_output(self, action, encoding):
-        sample = encoding@tf.transpose(
-            self._parameters[action].coef) + \
-            tfd.Normal(loc=0, scale=tf.sqrt(
-                self._parameters[action].noise)).sample(1)
-        return tf.squeeze(sample)
+        self._sample_q_argmax = tf.argmax(
+            tf.matmul(self.sample_weight_distributions(),
+                      self._net_outputs.encoding, transpose_b=True) +
+            tfd.MultivariateNormalDiag(
+                loc=[0]*self.num_actions, scale_diag=self.noise_var).sample(1),
+            name="Sample_Q")[0]
 
-    def bayesian_average(self, action, encoding):
-        sample = encoding@tf.transpose(
-            self._parameters[action].coef) + \
-            tfd.Normal(loc=0, scale=tf.sqrt(
-                self._parameters[action].noise)).sample(1)
-        return tf.squeeze(sample)
+        self._replay_net_outputs = self.online_convnet(self._replay.states)
+        self._replay_next_target_net_outputs = self.target_convnet(
+            self._replay.next_states)
+        self._replay_next_net_outputs = self.online_convnet(
+            self._replay.next_states)
 
-    def samples_per_action(self, encoding):
-        return tf.stack([self.bayesian_output(action, encoding) for action in range(0, self.num_actions)])
+        self.reset_dataset_op = self.build_reset_dataset_op()
+        self.update_dataset_op = self.build_update_dataset_op()
+        self.bayes_reg_op = self.build_bayesian_regressor_op()
 
-    def averages_per_action(self, encoding):
-        return tf.stack([self.bayesian_average(action, encoding) for action in range(0, self.num_actions)], axis=1)
+    def init_bayes_reg_params(self):
+        self.mean = tf.get_variable(
+            "parameters/mean", initializer=self.mean_initializer, trainable=False)
+        self.cov = tf.get_variable(
+            "parameters/cov", initializer=self.cov_initializer, trainable=False)
+        self.cov_decomp = tf.get_variable(
+            "parameters/cov_decomp", initializer=self.cov_decomp_initializer, trainable=False)
+        self.phiphiT = tf.get_variable(
+            "parameters/phiphiT", initializer=self.phiphiT_initializer, trainable=False)
+        self.phiY = tf.get_variable(
+            "parameters/phiY", initializer=self.phiY_initializer, trainable=False)
+        self.a = tf.get_variable(
+            "parameters/alpha", initializer=self.alpha_initializer, trainable=False)
+        self.b = tf.get_variable(
+            "parameters/beta", initializer=self.beta_initializer, trainable=False)
+        self.tartarT = tf.get_variable(
+            "parameters/tartarT", initializer=tf.cast(np.zeros((self.num_actions,)), dtype=tf.float32), trainable=False)
+        self.num_samples = tf.get_variable(
+            "parameters/num_samples", initializer=tf.cast(np.zeros((self.num_actions,)), dtype=tf.float32), trainable=False)
 
-    def _build_update_bayes_op(self):
+    def build_regression_distributions(self):
+        with tf.name_scope("Sample_Weights"):
+            weight_distributions = []
+            noise_var = []
+            for a in range(self.num_actions):
 
+                noise_distribution = tfd.InverseGamma(
+                    concentration=self.a[a], rate=self.b[a])
+                noise_var.append(noise_distribution.sample(1))
+
+                weight_distributions.append(
+                    tfd.MultivariateNormalTriL(
+                        loc=self.mean[a, :],
+                        scale_tril=tf.sqrt(noise_var[a])*self.cov_decomp[a, :, :])
+                )
+
+                if self.summary_writer:
+                    tf.summary.histogram(
+                        str(a), noise_distribution.sample(1000), family="noise_dist")
+
+                    sampled_weights = weight_distributions[a].sample(1000)
+                    
+                    for weight in range(self.encoding_size):
+                        tf.summary.histogram(
+                            str(weight), sampled_weights[:, weight], family="per_weight_dist")
+            noise_var = tf.squeeze(tf.stack(noise_var))
+
+        return noise_var, weight_distributions
+
+    def build_reset_dataset_op(self):
+        with tf.name_scope("Reset_Priors"):
+            priors = []
+            priors.append(
+                tf.assign(self.phiphiT, value=self.phiphiT_initializer, validate_shape=True))
+            priors.append(
+                tf.assign(self.phiY, value=self.phiY_initializer, validate_shape=True))
+            priors.append(
+                tf.assign(self.tartarT, value=tf.cast(np.zeros((self.num_actions,)), dtype=tf.float32), validate_shape=True))
+            priors.append(
+                tf.assign(self.num_samples, value=tf.cast(np.zeros((self.num_actions,)), dtype=tf.float32), validate_shape=True))
+            return priors
+
+    def build_update_dataset_op(self):
         updates = [0]*self.num_actions
         for action in range(0, self.num_actions):
-            with tf.variable_scope('masked_target'):
+
+            with tf.name_scope("BayesTarget"):
+
                 boolean_mask = tf.equal(self._replay.actions, action)
                 rewards = tf.boolean_mask(self._replay.rewards, boolean_mask)
                 terminals = tf.boolean_mask(
                     self._replay.terminals, boolean_mask)
                 state_q_encoding = tf.boolean_mask(
-                    self._replay_target_net_outputs.encoding, boolean_mask)
+                    self._replay_net_outputs.encoding, boolean_mask)
                 next_state_q_encoding = tf.boolean_mask(
                     self._replay_next_target_net_outputs.encoding, boolean_mask)
-                _next_replay_q_max = tf.reduce_max(
-                    self.averages_per_action(next_state_q_encoding))
 
-                print("NEXT replay q _max is ", _next_replay_q_max.get_shape())
+                num_samples = tf.reduce_sum(tf.cast(boolean_mask, tf.int32))
+
+
+                replay_next_q_values = []
+
+                weights = self.sample_weight_distributions(n=num_samples)
+
+                for a in range(self.num_actions):
+                    replay_next_q_values.append(weights[a]*(next_state_q_encoding))
+
+                replay_next_q_values = tf.stack(tf.reduce_sum(replay_next_q_values, axis=-1), axis=0)
+                replay_next_q_max = tf.reduce_max(replay_next_q_values, axis=0, name="qt_max")    
 
                 target = rewards + self.cumulative_gamma * \
-                    _next_replay_q_max * \
-                    (1. - tf.cast(terminals, tf.float32))
+                    replay_next_q_max * (1. - tf.cast(terminals, tf.float32))
 
-                updates[action] = self._update_single_dist_op(
-                    self._dists[action], state_q_encoding, target)
-
-                tf.summary.scalar(str(action),
-                                  self._dists[action].b /
-                                  (self._dists[action].a - 1),
-                                  family="mean_noise")
+            updates[action] = self.add_data_to_action_dataset(
+                action, state_q_encoding, target)
 
         return updates
 
-    def _rebuild_train_op(self):
-        """Reuilds the training op.
+    def add_data_to_action_dataset(self, action, encoding, target):
+        with tf.name_scope("Update_Dataset"):
+            target = tf.reshape(target, [-1, 1], name="target")
+            phiphiT = self.phiphiT[action, :, :] + \
+                tf.matmul(encoding, encoding, transpose_a=True)
+            phiY = self.phiY[action, :, None] + \
+                tf.matmul(encoding, target, transpose_a=True)
+            tartarT = self.tartarT[action] + \
+                tf.matmul(target, target, transpose_a=True)
+
+            num_samples = self.num_samples[action] + \
+                tf.cast(tf.size(target), tf.float32)
+
+            update = [tf.assign(self.phiphiT[action, :, :], phiphiT),
+                    tf.assign(self.phiY[action, :], tf.squeeze(phiY)),
+                    tf.assign(self.tartarT[action], tf.squeeze(tartarT)),
+                    tf.assign(self.num_samples[action], num_samples)]
+
+            return update
+
+    def build_bayesian_regressor_op(self):
+        with tf.name_scope("Bayes_Reg"):
+            updates = []
+            for a in range(0, self.num_actions):
+                inv_cov = self.phiphiT[a, :, :] + tf.linalg.inv(self.cov_initializer[a,:,:])
+                cov = tf.linalg.inv(inv_cov)
+                mean = cov@(self.phiY[a, :, None] + 
+                         tf.linalg.inv(self.cov_initializer[a,:,:])@self.mean[a,:, None])
+
+                cov_decomp = tf.linalg.cholesky(cov)
+
+                alpha = self.alpha_initializer[a] + \
+                    tf.cast(self.num_samples[a]/2, tf.float32)
+
+                b = self.beta_initializer[a] + 0.5*\
+                    tf.squeeze(self.tartarT[a] -
+                               tf.transpose(mean)@inv_cov@mean + 
+                               tf.transpose(self.mean[a,:,None])@
+                                tf.linalg.inv(self.cov_initializer[a,:,:])@self.mean[a,:,None])
+                
+                b = tf.maximum(b, 1e-12)
+
+                tf.summary.scalar(str(a), alpha, family="alpha")
+                tf.summary.scalar(str(a), b, family="beta")
+
+                updates.append([tf.assign(self.mean[a, :], tf.squeeze(mean)),
+                                tf.assign(self.cov[a, :, :], cov),
+                                tf.assign(
+                                    self.cov_decomp[a, :, :], cov_decomp),
+                                tf.assign(self.a[a], alpha),
+                                tf.assign(self.b[a], b)])
+        return updates
+
+    def _build_replay_buffer(self, use_staging):
+        """Creates the replay buffer used by the agent.
+
+        Args:
+        use_staging: bool, if True, uses a staging area to prefetch data for
+            faster training.
 
         Returns:
-          train_op: An op performing one step of training from replay data.
+        A WrapperReplayBuffer object.
         """
-        replay_action_one_hot = tf.one_hot(
-            self._replay.actions, self.num_actions, 1., 0., name='action_one_hot')
-        replay_chosen_q = tf.reduce_sum(
-            self.averages_per_action(
-                self._replay_next_target_net_outputs.encoding) * replay_action_one_hot,
-            reduction_indices=1,
-            name='replay_chosen_q')
+        return circular_replay_buffer.WrappedReplayBuffer(
+            observation_shape=self.observation_shape,
+            stack_size=self.stack_size,
+            use_staging=use_staging,
+            update_horizon=self.update_horizon,
+            gamma=self.gamma,
+            observation_dtype=self.observation_dtype.as_numpy_dtype)
+
+    def _build_target_q_op(self):
+        """Build an op used as a target for the Q-value.
+
+        Returns:
+        target_q_op: An op calculating the Q-value.
+        """
+        with tf.name_scope("Calc_Target"):
+
+            replay_next_q_argmax = tf.one_hot(
+                tf.argmax(tf.matmul(self.mean, self._replay_next_net_outputs.encoding,
+                                       transpose_b=True)),
+                self.num_actions, name="argmax_next_q")
+
+            replay_next_qt_max = tf.reduce_sum(
+                tf.transpose(tf.matmul(self.mean, self._replay_next_target_net_outputs.encoding,
+                                       transpose_b=True)) * replay_next_q_argmax,
+                reduction_indices=1,
+                name='qt_max')
+
+            qt = tf.matmul(self.mean,
+                            self._replay_next_target_net_outputs.encoding,
+                            transpose_b=True)
+
+            qs = tf.matmul(self.sample_weight_distributions(),
+                            self._replay_next_target_net_outputs.encoding,
+                            transpose_b=True)
+
+            tf.summary.scalar("sample_diff", tf.reduce_mean(qt-qs))
+
+            tf.summary.scalar("mean", tf.reduce_mean(
+                qt, axis=1)[0], family="q-values0")
+            tf.summary.scalar("mean", tf.reduce_mean(
+                qt, axis=1)[1], family="q-values1")
+
+            tf.summary.scalar("sample", tf.reduce_mean(
+                qs, axis=1)[0], family="q-values0")
+            tf.summary.scalar("sample", tf.reduce_mean(
+                qs, axis=1)[1], family="q-values1")
+
+            return self._replay.rewards + self.cumulative_gamma * replay_next_qt_max * (
+                1. - tf.cast(self._replay.terminals, tf.float32))
+
+    def _build_train_op(self):
+        """Builds a training op.
+
+        Returns:
+        train_op: An op performing one step of training from replay data.
+        """
 
         target = tf.stop_gradient(self._build_target_q_op())
-        loss = tf.losses.huber_loss(
-            target, replay_chosen_q, reduction=tf.losses.Reduction.NONE)
-        if self.summary_writer is not None:
-            with tf.variable_scope('Losses'):
+
+        with tf.name_scope("Loss"):
+
+            replay_action_one_hot = tf.one_hot(
+                self._replay.actions, self.num_actions, 1., 0., name='action_one_hot')
+            replay_chosen_q = tf.reduce_sum(
+                tf.transpose(tf.matmul(self.mean, self._replay_net_outputs.encoding,
+                                       transpose_b=True)) * replay_action_one_hot,
+                reduction_indices=1,
+                name='replay_chosen_q')
+
+            loss = tf.losses.huber_loss(
+                target, replay_chosen_q, reduction=tf.losses.Reduction.NONE)
+
+            if self.summary_writer is not None:
                 tf.summary.scalar('HuberLoss', tf.reduce_mean(loss))
-        return self.optimizer.minimize(tf.reduce_mean(loss))
+            return self.optimizer.minimize(tf.reduce_mean(loss))
 
-    def _update_single_dist_op(self, dist, encoding, target):
-        with tf.variable_scope('dist_update'):
-            xT = tf.transpose(encoding)
-            xTx = xT@encoding
+    def _build_sync_op(self):
+        """Builds ops for assigning weights from online to target network.
 
-            target = tf.reshape(target, [-1, 1], name="target")
-
-            update_inv_cov = xTx + dist.inv_cov
-
-            update_mu = tf.linalg.inv(update_inv_cov)@ \
-                (xT@target + dist.inv_cov@dist.mean)
-
-            update_a = dist.a + tf.cast(tf.size(target)/2, tf.float32)
-
-            update_b = dist.b + (dist.a-1)/dist.b*0.5 *\
-                tf.squeeze(tf.transpose(target)@target +
-                           tf.transpose(dist.mean)@dist.inv_cov@dist.mean -
-                           tf.transpose(update_mu)@update_inv_cov@update_mu)
-
-            tf.summary.scalar("mean",
-                              tf.reduce_sum(dist.mean))
-
-            tf.summary.scalar("cov",
-                              tf.reduce_mean(tf.linalg.inv(dist.inv_cov)))
-
-            update = Dist(dist.mean.assign(update_mu),
-                          dist.inv_cov.assign(update_inv_cov),
-                          dist.a.assign(update_a),
-                          dist.b.assign(update_b))
-
-        return update
+        Returns:
+        ops: A list of ops assigning weights from online to target network.
+        """
+        # Get trainable variables from online and target DQNs
+        sync_qt_ops = []
+        trainables_online = tf.get_collection(
+            tf.GraphKeys.TRAINABLE_VARIABLES, scope='Online')
+        trainables_target = tf.get_collection(
+            tf.GraphKeys.TRAINABLE_VARIABLES, scope='Target')
+        for (w_online, w_target) in zip(trainables_online, trainables_target):
+            # Assign weights from online to target network.
+            sync_qt_ops.append(w_target.assign(w_online, use_locking=True))
+        return sync_qt_ops
 
     def begin_episode(self, observation):
         """Returns the agent's first action for this episode.
 
         Args:
-          observation: numpy array, the environment's initial observation.
+        observation: numpy array, the environment's initial observation.
 
         Returns:
-          int, the selected action.
+        int, the selected action.
         """
+        self._reset_state()
+        self._record_observation(observation)
 
-        # self._sess.run(self._sample_coef_op)
-        # params = self._sess.run(self._parameters)
-        # print("\nMean Action 1\n", np.sum(params[0].coef))
-        # print("Mean Action 2\n", np.sum(params[1].coef))
-        return super().begin_episode(observation)
+        if not self.eval_mode:
+            self._train_step()
+
+        self.action = self._select_action()
+        return self.action
+
+    def step(self, reward, observation):
+        """Records the most recent transition and returns the agent's next action.
+
+        We store the observation of the last time step since we want to store it
+        with the reward.
+
+        Args:
+        reward: float, the reward received from the agent's most recent action.
+        observation: numpy array, the most recent observation.
+
+        Returns:
+        int, the selected action.
+        """
+        self._last_observation = self._observation
+        self._record_observation(observation)
+
+        if not self.eval_mode:
+            self._store_transition(
+                self._last_observation, self.action, reward, False)
+            self._train_step()
+
+        self.action = self._select_action()
+        return self.action
+
+    def end_episode(self, reward):
+        """Signals the end of the episode to the agent.
+
+        We store the observation of the current time step, which is the last
+        observation of the episode.
+
+        Args:
+        reward: float, the last reward from the environment.
+        """
+        if not self.eval_mode:
+            self._store_transition(
+                self._observation, self.action, reward, True)
 
     def _select_action(self):
-        # if self.eval_mode:
-            # epsilon = self.epsilon_eval
-        #     else:
-        #         epsilon = self.epsilon_fn(
-        #             self.epsilon_decay_period,
-        #             self.training_steps,
-        #             self.min_replay_history,
-        #             self.epsilon_train)
-        #     if random.random() <= epsilon:
-        #         # Choose a random action with probability epsilon.
-        #         return random.randint(0, self.num_actions - 1)
-        #     else:
-        #         # Choose the action with highest Q-value at the current state.
-        self._sess.run(self._sample_coef_op)
-        action, q_values = self._sess.run([self._q_argmax, self._q_values], {
-            self.state_ph: self.state})
-        return action
+        """Select an action from the set of available actions.
 
-    # def _select_action(self):
-    #     """Select an action from the set of available actions.
+        Chooses an action randomly with probability self._calculate_epsilon(), and
+        otherwise acts greedily according to the current Q-value estimates.
 
-    #     Chooses an action randomly with probability self._calculate_epsilon(), and
-    #     otherwise acts greedily according to the current Q-value estimates.
+        Returns:
+        int, the selected action.
+        """
+        if self.eval_mode:
+            return self._sess.run(self._q_argmax, {self.state_ph: self.state})
 
-    #     Returns:
-    #        int, the selected action.
-    #     """
-    #     if self.eval_mode:
-    #         epsilon = self.epsilon_eval
-    #     else:
-    #         epsilon = self.epsilon_fn(
-    #             self.epsilon_decay_period,
-    #             self.training_steps,
-    #             self.min_replay_history,
-    #             self.epsilon_train)
-    #     if random.random() <= epsilon:
-    #         # Choose a random action with probability epsilon.
-    #         return random.randint(0, self.num_actions - 1)
-    #     else:
-    #         # Choose the action with highest Q-value at the current state.
-    #         self._sess.run(self._sample_coef_op)
-
-    #         action, q_values = self._sess.run([self._q_argmax, self._q_values], {
-    #                                           self.state_ph: self.state})
-    #         # print(q_values)
-    #         return action
+        return self._sess.run(self._sample_q_argmax, {self.state_ph: self.state})
 
     def _train_step(self):
         """Runs a single training step.
 
         Runs a training op if both:
-          (1) A minimum number of frames have been added to the replay buffer.
-          (2) `training_steps` is a multiple of `update_period`.
+        (1) A minimum number of frames have been added to the replay buffer.
+        (2) `training_steps` is a multiple of `update_period`.
 
         Also, syncs weights from online to target network if training steps is a
         multiple of target update period.
@@ -423,24 +613,132 @@ class BDQNAgent(dqn_agent.DQNAgent):
         # have been run. This matches the Nature DQN behaviour.
         if self._replay.memory.add_count > self.min_replay_history:
             if self.training_steps % self.update_period == 0:
+
+                # Train step
                 self._sess.run(self._train_op)
+
+                # Add summary things
                 if (self.summary_writer is not None and
                     self.training_steps > 0 and
                         self.training_steps % self.summary_writing_frequency == 0):
                     summary = self._sess.run(self._merged_summaries)
+
                     self.summary_writer.add_summary(
                         summary, self.training_steps)
 
+            # Retrain bayes reg
             if self.training_steps % self.target_update_period == 0:
-                self._sess.run(self._sync_qt_ops)
+                
+                self._sess.run([self._sync_qt_ops, self.reset_dataset_op])
 
-            if self.training_steps % self._bayes_update_period == 0:
-                self._sess.run(self._reset_priors_op)
-                for _ in range(0, 20):
-                    self._sess.run(self._update_bayes_op)
+                training_iterations = int(min(
+                    self._replay.memory.add_count, 20000)/self._replay.batch_size)
 
-                # dists = self._sess.run(self._dists)
-                # for action in range(0, self.num_actions):
-                #     print("Action mean: ", sum(dists[action].mean))
+                for _ in range(training_iterations):
+                    self._sess.run(self.update_dataset_op)
+
+                self._sess.run(self.bayes_reg_op)
 
         self.training_steps += 1
+
+    def _record_observation(self, observation):
+        """Records an observation and update state.
+
+        Extracts a frame from the observation vector and overwrites the oldest
+        frame in the state buffer.
+
+        Args:
+            observation: numpy array, an observation from the environment.
+        """
+        # Set current observation. We do the reshaping to handle environments
+        # without frame stacking.
+        self._observation = np.reshape(observation, self.observation_shape)
+        # Swap out the oldest frame with the current frame.
+        self.state = np.roll(self.state, -1, axis=-1)
+        self.state[0, ..., -1] = self._observation
+
+    def _store_transition(self, last_observation, action, reward, is_terminal):
+        """Stores an experienced transition.
+
+        Executes a tf session and executes replay buffer ops in order to store the
+        following tuple in the replay buffer:
+            (last_observation, action, reward, is_terminal).
+
+        Pedantically speaking, this does not actually store an entire transition
+        since the next state is recorded on the following time step.
+
+        Args:
+            last_observation: numpy array, last observation.
+            action: int, the action taken.
+            reward: float, the reward.
+            is_terminal: bool, indicating if the current state is a terminal state.
+        """
+        self._replay.add(last_observation, action, reward, is_terminal)
+
+    def _reset_state(self):
+        """Resets the agent state by filling it with zeros."""
+        self.state.fill(0)
+
+    def bundle_and_checkpoint(self, checkpoint_dir, iteration_number):
+        """Returns a self-contained bundle of the agent's state.
+
+        This is used for checkpointing. It will return a dictionary containing all
+        non-TensorFlow objects (to be saved into a file by the caller), and it saves
+        all TensorFlow objects into a checkpoint file.
+
+        Args:
+            checkpoint_dir: str, directory where TensorFlow objects will be saved.
+            iteration_number: int, iteration number to use for naming the checkpoint
+            file.
+
+        Returns:
+            A dict containing additional Python objects to be checkpointed by the
+            experiment. If the checkpoint directory does not exist, returns None.
+        """
+        if not tf.gfile.Exists(checkpoint_dir):
+            return None
+        # Call the Tensorflow saver to checkpoint the graph.
+        self._saver.save(
+            self._sess,
+            os.path.join(checkpoint_dir, 'tf_ckpt'),
+            global_step=iteration_number)
+        # Checkpoint the out-of-graph replay buffer.
+        self._replay.save(checkpoint_dir, iteration_number)
+        bundle_dictionary = {}
+        bundle_dictionary['state'] = self.state
+        bundle_dictionary['eval_mode'] = self.eval_mode
+        bundle_dictionary['training_steps'] = self.training_steps
+        return bundle_dictionary
+
+    def unbundle(self, checkpoint_dir, iteration_number, bundle_dictionary):
+        """Restores the agent from a checkpoint.
+
+        Restores the agent's Python objects to those specified in bundle_dictionary,
+        and restores the TensorFlow objects to those specified in the
+        checkpoint_dir. If the checkpoint_dir does not exist, will not reset the
+            agent's state.
+
+        Args:
+            checkpoint_dir: str, path to the checkpoint saved by tf.Save.
+            iteration_number: int, checkpoint version, used when restoring replay
+            buffer.
+            bundle_dictionary: dict, containing additional Python objects owned by
+            the agent.
+
+        Returns:
+            bool, True if unbundling was successful.
+        """
+        try:
+            # self._replay.load() will throw a NotFoundError if it does not find all
+            # the necessary files, in which case we abort the process & return False.
+            self._replay.load(checkpoint_dir, iteration_number)
+        except tf.errors.NotFoundError:
+            return False
+        for key in self.__dict__:
+            if key in bundle_dictionary:
+                self.__dict__[key] = bundle_dictionary[key]
+        # Restore the agent's TensorFlow graph.
+        self._saver.restore(self._sess,
+                            os.path.join(checkpoint_dir,
+                                         'tf_ckpt-{}'.format(iteration_number)))
+        return True
