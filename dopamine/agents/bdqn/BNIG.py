@@ -81,37 +81,32 @@ class BNIG():
         return update_ops
 
     def _build_bayes_posterior_update(self, X, y, n):
-            inv_cov = tf.transpose(X)@X + tf.linalg.inv(self.cov)
-            cov = tf.linalg.inv(inv_cov)
+
+            lr = 0
+
+            temp = tf.linalg.inv(tf.linalg.cholesky(self.cov))
+            inv_cov = tf.transpose(X)@X + (1-lr)*tf.transpose(temp)@temp
+
+
+            temp2 = tf.linalg.inv(tf.linalg.cholesky(inv_cov))
+            cov = tf.transpose(temp2)@temp2
     
             mean = cov@(tf.transpose(X)@y +
-                        tf.linalg.inv(self.cov)@self.mean[:,None])
-            print_op1 = tf.print("X Max:", tf.reduce_max(X), "Min", tf.reduce_min(X))
-            print_op2 = tf.print("Y Max:", tf.reduce_max(y), "Min", tf.reduce_min(y))
+                        (1-lr)*tf.linalg.inv(self.cov)@self.mean[:,None])
 
-            # lr = 0.01
-            # mean = (1-lr)*self.mean[:,None] + lr*mean
-            # cov = (1-lr)*self.cov + lr*cov
-
-            alpha = self.a + \
+            alpha = (1-lr)*self.a + \
                 tf.cast(n/2, tf.float32)
 
-            b = self.b + 0.5*\
+            b = (1-lr)*self.b + 0.5*\
                 tf.squeeze(tf.transpose(y)@y -
                             tf.transpose(mean)@inv_cov@mean + 
-                            tf.transpose(self.mean[:,None])@
+                            (1-lr)*tf.transpose(self.mean[:,None])@
                             tf.linalg.inv(self.cov)@self.mean[:,None])
             
             tf.summary.scalar(str(self.action), alpha, family="alpha")
             tf.summary.scalar(str(self.action), b, family="beta")
             
-            # print_op = tf.print( -
-            #                 tf.transpose(mean)@inv_cov@mean + 
-            #                 tf.transpose(self.mean[:,None])@
-            #                 tf.linalg.inv(self.cov)@self.mean[:,None])
-            
-            with tf.control_dependencies([print_op1,print_op2]):
-                return  [tf.assign(self.mean, tf.squeeze(mean)),
-                        tf.assign(self.cov, cov),
-                        tf.assign(self.a, alpha),
-                        tf.assign(self.b, b)]
+            return  [tf.assign(self.mean, tf.squeeze(mean)),
+                    tf.assign(self.cov, cov),
+                    tf.assign(self.a, alpha),
+                    tf.assign(self.b, b)]
