@@ -272,6 +272,7 @@ class BDQNAgent(object):
             return self._replay.rewards + self.cumulative_gamma * replay_next_qt_max * (
                 1. - tf.cast(self._replay.terminals, tf.float32))
 
+
     def _build_train_op(self):
         """Builds a training op.
 
@@ -431,7 +432,7 @@ class BDQNAgent(object):
                 self._sess.run(self.train_bnig)
 
             if self.training_steps % self.target_update_period == 0:
-                self._sess.run([self._sync_qt_ops])
+                self._sess.run([self._sync_qt_ops]+[model.reset_variance_op() for model in self.bnig_models])
 
         self.training_steps += 1
 

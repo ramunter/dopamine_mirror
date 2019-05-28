@@ -16,8 +16,8 @@ class BNIG():
                  state,
                  replay_next_state,
                  replay_buffer,
-                 coef_var=1,
-                 lr=1e-2):
+                 coef_var=1e3,
+                 lr=1e-4):
         self.action = action
 
         # External Tensors
@@ -76,23 +76,28 @@ class BNIG():
 
         with tf.name_scope("posterior_update"):
             
+            target.set_shape([self._replay.batch_size])
+
             # Filter relevant data for action
             boolean_mask = tf.equal(self._replay.actions, self.action)
             num_samples = tf.reduce_sum(tf.cast(boolean_mask, tf.int32))
 
             state = tf.boolean_mask(state, boolean_mask)
             target = tf.boolean_mask(target, boolean_mask)
+            terminal = tf.boolean_mask((tf.cast(self._replay.terminals, tf.float32)[:,None]), boolean_mask)
 
-            update_ops = self._build_bayes_posterior_update(state, target[:, None], num_samples)
+            update_ops = self._build_bayes_posterior_update(state, target[:, None], terminal, num_samples)
 
         return update_ops
 
-    def _build_bayes_posterior_update(self, X, y, n):
+    def _build_bayes_posterior_update(self, X, y, terminal, n):
 
             XTX = self.mem*self.XTX + tf.transpose(X)@X
             XTy = self.mem*self.XTy + tf.transpose(X)@y
-            yTy = self.mem*self.yTy + tf.transpose(y)@y
 
+            y_t = y*(1.-terminal) + X@self.mean[:,None]*terminal
+            
+            yTy = self.mem*self.yTy + tf.transpose(y_t)@y_t
             n   = self.mem*self.n   + tf.cast(n, tf.float32)
 
             inv_cov = XTX + tf.linalg.inv(self.cov_prior)
@@ -108,10 +113,9 @@ class BNIG():
                     0.5*tf.squeeze(yTy -
                         tf.transpose(mean)@inv_cov@mean),
                     1e-6)
-
+            
             tf.summary.scalar(str(self.action), alpha, family="alpha")
             tf.summary.scalar(str(self.action), beta, family="beta")
-            
 
             return  [tf.assign(self.mean , tf.squeeze(mean)),
                     tf.assign(self.cov  , cov),
@@ -121,3 +125,8 @@ class BNIG():
                     tf.assign(self.XTy  , XTy),
                     tf.assign(self.n    , n),
                     tf.assign(self.yTy  , yTy)]
+
+    def reset_variance_op(self):
+        temp = tf.linalg.inv(tf.linalg.cholesky(self.cov))
+        invcov = tf.transpose(temp)@temp
+        return tf.assign(self.yTy , tf.transpose(self.mean[:,None])@invcov@self.mean[:,None])
