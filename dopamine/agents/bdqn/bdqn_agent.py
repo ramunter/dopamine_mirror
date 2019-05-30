@@ -432,8 +432,8 @@ class BDQNAgent(object):
                 self._sess.run(self.train_bnig)
 
             if self.training_steps % self.target_update_period == 0:
-                self._sess.run([self._sync_qt_ops]+[model.reset_variance_op() for model in self.bnig_models])
-
+                self._sess.run([self._sync_qt_ops])
+            
         self.training_steps += 1
 
     def _record_observation(self, observation):

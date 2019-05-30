@@ -16,7 +16,7 @@ class BNIG():
                  state,
                  replay_next_state,
                  replay_buffer,
-                 coef_var=1e3,
+                 coef_var=1,
                  lr=1e-4):
         self.action = action
 
@@ -33,7 +33,7 @@ class BNIG():
 
             # Graphs
             self.sample_op = self._sampler_graph(state)
-            self.target_sample_op = self._sampler_graph(replay_next_state, n=self._replay.batch_size)
+            self.target_sample_op = self._target_sampler_graph(replay_next_state, n=self._replay.batch_size)
 
     @property
     def mean_prior(self):
@@ -70,6 +70,13 @@ class BNIG():
         sigma = tf.sqrt(sigma_dist.sample(1))
         normal = tfd.Normal(loc=0, scale=1)
         coef = self.mean[:,None] + sigma*tf.linalg.cholesky(self.cov)@normal.sample((self.input_size,n))
+        return tf.reduce_sum(_input*tf.transpose(coef), axis=1)# + normal.sample(n)*sigma
+
+    def _target_sampler_graph(self, _input, n=1):
+        sigma_dist = tfd.InverseGamma(concentration=self.alpha, rate=self.beta)
+        sigma = tf.sqrt(sigma_dist.sample(1))
+        normal = tfd.Normal(loc=0, scale=1)
+        coef = self.mean[:,None] + sigma*tf.linalg.cholesky(self.cov)@normal.sample((self.input_size,n))
         return tf.reduce_sum(_input*tf.transpose(coef), axis=1) + normal.sample(n)*sigma
 
     def _build_update_op(self, state, target):
@@ -84,20 +91,17 @@ class BNIG():
 
             state = tf.boolean_mask(state, boolean_mask)
             target = tf.boolean_mask(target, boolean_mask)
-            terminal = tf.boolean_mask((tf.cast(self._replay.terminals, tf.float32)[:,None]), boolean_mask)
-
-            update_ops = self._build_bayes_posterior_update(state, target[:, None], terminal, num_samples)
+    
+            update_ops = self._build_bayes_posterior_update(state, target[:, None], num_samples)
 
         return update_ops
 
-    def _build_bayes_posterior_update(self, X, y, terminal, n):
+    def _build_bayes_posterior_update(self, X, y, n):
 
             XTX = self.mem*self.XTX + tf.transpose(X)@X
             XTy = self.mem*self.XTy + tf.transpose(X)@y
 
-            y_t = y*(1.-terminal) + X@self.mean[:,None]*terminal
-            
-            yTy = self.mem*self.yTy + tf.transpose(y_t)@y_t
+            yTy = self.mem*self.yTy + tf.transpose(y)@y
             n   = self.mem*self.n   + tf.cast(n, tf.float32)
 
             inv_cov = XTX + tf.linalg.inv(self.cov_prior)
