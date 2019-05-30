@@ -16,7 +16,7 @@ class BNIG():
                  state,
                  replay_next_state,
                  replay_buffer,
-                 coef_var=1,
+                 coef_var=1e1,
                  lr=1e-4):
         self.action = action
 
@@ -26,8 +26,8 @@ class BNIG():
         self.input_size =  int(state.get_shape()[1])
         self.coef_var = coef_var
         self.mem = 1-lr
-
-        with tf.name_scope("BNIG"):
+        self.scope_name = "BNIG/"+str(action)
+        with tf.name_scope(self.scope_name):
 
             self._create_model_variables()
 
@@ -49,16 +49,16 @@ class BNIG():
 
     @property
     def beta_prior(self):
-        return tf.cast(1e-3, dtype=tf.float32)
+        return tf.cast(1e-2, dtype=tf.float32)
 
     def _create_model_variables(self):
-        with tf.variable_scope(str(self.action)+"/parameters/"):
+        with tf.variable_scope(self.scope_name+"/parameters/"):
             self.mean = tf.get_variable("mean",  initializer=self.mean_prior, trainable=False)
             self.cov  = tf.get_variable("cov",   initializer=self.cov_prior, trainable=False)
             self.alpha= tf.get_variable("alpha", initializer=self.alpha_prior, trainable=False)
             self.beta = tf.get_variable("beta",  initializer=self.beta_prior, trainable=False)
 
-        with tf.variable_scope(str(self.action)+"/data/"):
+        with tf.variable_scope(self.scope_name+"/data/"):
             self.XTX = tf.get_variable("XTX", initializer=tf.cast(np.zeros((self.input_size, self.input_size)), dtype=tf.float32), trainable=False)
             self.XTy = tf.get_variable("XTy", initializer=tf.cast(np.zeros((self.input_size, 1)), dtype=tf.float32), trainable=False)
             self.n   = tf.get_variable("n",   initializer=tf.cast(0, dtype=tf.float32), trainable=False)
@@ -81,7 +81,7 @@ class BNIG():
 
     def _build_update_op(self, state, target):
 
-        with tf.name_scope("posterior_update"):
+        with tf.name_scope(self.scope_name+"/posterior_update/"):
             
             target.set_shape([self._replay.batch_size])
 
@@ -129,8 +129,3 @@ class BNIG():
                     tf.assign(self.XTy  , XTy),
                     tf.assign(self.n    , n),
                     tf.assign(self.yTy  , yTy)]
-
-    def reset_variance_op(self):
-        temp = tf.linalg.inv(tf.linalg.cholesky(self.cov))
-        invcov = tf.transpose(temp)@temp
-        return tf.assign(self.yTy , tf.transpose(self.mean[:,None])@invcov@self.mean[:,None])

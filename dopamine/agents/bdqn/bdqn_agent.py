@@ -25,13 +25,11 @@ import random
 
 from dopamine.discrete_domains import atari_lib
 from dopamine.replay_memory import circular_replay_buffer
-from dopamine.agents.bdqn.BNIG import BNIG
+from dopamine.agents.bdqn.DeepBNIG import DeepBNIG
 
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
-
-
 
 import gin.tf
 
@@ -74,7 +72,7 @@ class BDQNAgent(object):
                      epsilon=0.00001,
                      centered=True),
                  summary_writer=None,
-                 summary_writing_frequency=5):
+                 summary_writing_frequency=500):
         """Initializes the agent and constructs the components of its graph.
 
         Args:
@@ -198,24 +196,25 @@ class BDQNAgent(object):
         # Calling online_convnet will generate a new graph as defined in
         # self._get_network_template using whatever input is passed, but will always
         # share the same weights.
-        self.online_convnet = tf.make_template(
-            'Online', self._network_template)
+
         self.target_convnet = tf.make_template(
-            'Target', self._network_template)
-        self._net = self.online_convnet(self.state_ph)
+            'Target', self._network_template, create_scope_now_=False)
 
-        self.encoding_size = int(self._net.encoding.get_shape()[1])
+        with tf.name_scope("Online"):
+            self.online_convnet = tf.make_template(
+            'Online', self._network_template, create_scope_now_=False)
+            self._net = self.online_convnet(self.state_ph)
+            self._replay_net = self.online_convnet(self._replay.states)
+            self._replay_next_net = self.online_convnet(self._replay.next_states)
 
-        self._replay_net = self.online_convnet(self._replay.states)
-        self._replay_next_net = self.online_convnet(self._replay.next_states)
+        with tf.name_scope("Target"):
+            self._replay_target_net = self.target_convnet(
+                self._replay.states)
+            self._replay_next_target_net = self.target_convnet(
+                self._replay.next_states)
 
-        self._replay_target_net = self.target_convnet(
-            self._replay.states)
-        self._replay_next_target_net = self.target_convnet(
-            self._replay.next_states)
-
-        # Create BNIG models
-        self.bnig_models = [BNIG(a,
+        # Create DeepBNIG models
+        self.bnig_models = [DeepBNIG(a,
                                  self._net.encoding,
                                  self._replay_next_target_net.encoding,
                                  self._replay)
@@ -325,10 +324,14 @@ class BDQNAgent(object):
             tf.GraphKeys.TRAINABLE_VARIABLES, scope='Online')
         trainables_target = tf.get_collection(
             tf.GraphKeys.TRAINABLE_VARIABLES, scope='Target')
-        for (w_online, w_target) in zip(trainables_online, trainables_target):
-            # Assign weights from online to target network.
-            sync_qt_ops.append(w_target.assign(w_online, use_locking=True))
-        return sync_qt_ops
+
+        
+        with tf.name_scope("SyncTargetNet"):
+
+            for (w_online, w_target) in zip(trainables_online, trainables_target):
+                # Assign weights from online to target network.
+                sync_qt_ops.append(w_target.assign(w_online, use_locking=True))
+            return sync_qt_ops
 
     def begin_episode(self, observation):
         """Returns the agent's first action for this episode.
@@ -342,7 +345,7 @@ class BDQNAgent(object):
         self._reset_state()
         self._record_observation(observation)
 
-        # self._weight_samples = self.sample_weight_distributions()
+        self._sess.run([model.update_normal_vector_op for model in self.bnig_models])
 
         if not self.eval_mode:
             self._train_step()
