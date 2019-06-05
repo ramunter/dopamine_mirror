@@ -16,8 +16,8 @@ class BNIG():
                  state,
                  replay_next_state,
                  replay_buffer,
-                 coef_var=1e1,
-                 lr=1e-4):
+                 coef_var=1,
+                 lr=1e-2):
         self.action = action
 
         # External Tensors
@@ -45,18 +45,27 @@ class BNIG():
 
     @property
     def alpha_prior(self):
-        return tf.cast(1, dtype=tf.float32)
+        return tf.cast(1 + 1e-3, dtype=tf.float32)
 
     @property
     def beta_prior(self):
         return tf.cast(1e-2, dtype=tf.float32)
 
+    @property
+    def expected_variance(self):
+        return tf.reshape(self.beta/(self.alpha-1), [])
+
     def _create_model_variables(self):
         with tf.variable_scope(self.scope_name+"/parameters/"):
-            self.mean = tf.get_variable("mean",  initializer=self.mean_prior, trainable=False)
-            self.cov  = tf.get_variable("cov",   initializer=self.cov_prior, trainable=False)
-            self.alpha= tf.get_variable("alpha", initializer=self.alpha_prior, trainable=False)
-            self.beta = tf.get_variable("beta",  initializer=self.beta_prior, trainable=False)
+            self.mean  = tf.get_variable("mean",  initializer=self.mean_prior, trainable=False)
+            self.cov   = tf.get_variable("cov",   initializer=self.cov_prior, trainable=False)
+            self.alpha = tf.get_variable("alpha", initializer=self.alpha_prior, trainable=False)
+            self.beta  = tf.get_variable("beta",  initializer=self.beta_prior, trainable=False)
+
+            self.tar_mean  = tf.get_variable("tar_mean",  initializer=self.mean_prior, trainable=False)
+            self.tar_cov   = tf.get_variable("tar_cov",   initializer=self.cov_prior, trainable=False)
+            self.tar_alpha = tf.get_variable("tar_alpha", initializer=self.alpha_prior, trainable=False)
+            self.tar_beta  = tf.get_variable("tar_beta",  initializer=self.beta_prior, trainable=False)
 
         with tf.variable_scope(self.scope_name+"/data/"):
             self.XTX = tf.get_variable("XTX", initializer=tf.cast(np.zeros((self.input_size, self.input_size)), dtype=tf.float32), trainable=False)
@@ -70,16 +79,16 @@ class BNIG():
         sigma = tf.sqrt(sigma_dist.sample(1))
         normal = tfd.Normal(loc=0, scale=1)
         coef = self.mean[:,None] + sigma*tf.linalg.cholesky(self.cov)@normal.sample((self.input_size,n))
-        return tf.reduce_sum(_input*tf.transpose(coef), axis=1)# + normal.sample(n)*sigma
-
-    def _target_sampler_graph(self, _input, n=1):
-        sigma_dist = tfd.InverseGamma(concentration=self.alpha, rate=self.beta)
-        sigma = tf.sqrt(sigma_dist.sample(1))
-        normal = tfd.Normal(loc=0, scale=1)
-        coef = self.mean[:,None] + sigma*tf.linalg.cholesky(self.cov)@normal.sample((self.input_size,n))
         return tf.reduce_sum(_input*tf.transpose(coef), axis=1) + normal.sample(n)*sigma
 
-    def _build_update_op(self, state, target):
+    def _target_sampler_graph(self, _input, n=1):
+        sigma_dist = tfd.InverseGamma(concentration=self.tar_alpha, rate=self.tar_beta)
+        sigma = tf.sqrt(sigma_dist.sample(1))
+        normal = tfd.Normal(loc=0, scale=1)
+        coef = self.tar_mean[:,None] + sigma*tf.linalg.cholesky(self.tar_cov)@normal.sample((self.input_size,n))
+        return tf.reduce_sum(_input*tf.transpose(coef), axis=1) + normal.sample(n)*sigma
+
+    def _build_update_op(self, state, target, target_var):
 
         with tf.name_scope(self.scope_name+"/posterior_update/"):
             
@@ -91,16 +100,20 @@ class BNIG():
 
             state = tf.boolean_mask(state, boolean_mask)
             target = tf.boolean_mask(target, boolean_mask)
-    
-            update_ops = self._build_bayes_posterior_update(state, target[:, None], num_samples)
+            target_var = tf.boolean_mask(target_var, boolean_mask)
+            terminals = tf.boolean_mask(self._replay.terminals, boolean_mask)
+            terminals = tf.cast(terminals, tf.float32)
+            update_ops = self._build_bayes_posterior_update(state, target[:, None], target_var, num_samples, terminals)
 
         return update_ops
 
-    def _build_bayes_posterior_update(self, X, y, n):
+    def _build_bayes_posterior_update(self, X, y, var, n, terminals):
 
             XTX = self.mem*self.XTX + tf.transpose(X)@X
             XTy = self.mem*self.XTy + tf.transpose(X)@y
 
+            # yTy = self.mem*self.yTy + tf.reduce_sum(var)
+            # y_t = y*(1-terminals[:,None]) + X@self.mean[:,None]*(terminals[:,None])
             yTy = self.mem*self.yTy + tf.transpose(y)@y
             n   = self.mem*self.n   + tf.cast(n, tf.float32)
 
@@ -110,14 +123,14 @@ class BNIG():
     
             mean = cov@XTy
 
-            alpha = self.alpha_prior + \
-                tf.cast(n/2, tf.float32)
+            alpha = self.alpha_prior + tf.cast(n/2, tf.float32)
 
             beta = tf.maximum(self.beta_prior + \
                     0.5*tf.squeeze(yTy -
                         tf.transpose(mean)@inv_cov@mean),
                     1e-6)
-            
+            # beta = self.beta_prior + 0.5*tf.reshape(self.yTy, [])
+
             tf.summary.scalar(str(self.action), alpha, family="alpha")
             tf.summary.scalar(str(self.action), beta, family="beta")
 
@@ -129,3 +142,9 @@ class BNIG():
                     tf.assign(self.XTy  , XTy),
                     tf.assign(self.n    , n),
                     tf.assign(self.yTy  , yTy)]
+
+    def sync_target(self):
+        return  [tf.assign(self.tar_mean , self.mean),
+                    tf.assign(self.tar_cov  , self.cov),
+                    tf.assign(self.tar_alpha, self.alpha),
+                    tf.assign(self.tar_beta , self.beta)]

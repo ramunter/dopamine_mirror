@@ -71,7 +71,6 @@ def create_gym_environment(environment_name=None, version='v0'):
     env = GymPreprocessing(env)
     return env
 
-
 @gin.configurable
 def _basic_discrete_domain_network(min_vals, max_vals, num_actions, state,
                                    num_atoms=None):

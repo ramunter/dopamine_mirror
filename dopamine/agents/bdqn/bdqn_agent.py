@@ -178,9 +178,6 @@ class BDQNAgent(object):
         """
         return self.network(self.num_actions, self._get_network_type(), state)
 
-    def sample_weight_distributions(self, n=1):
-        return tf.stack([tf.squeeze(dist.sample(n)) for dist in self.weight_distributions], axis=0)
-
     def _build_networks(self):
         """Builds the Q-value network computations needed for acting and training.
 
@@ -220,9 +217,9 @@ class BDQNAgent(object):
                                  self._replay)
                              for a in range(self.num_actions)]
 
-        self.targets = self._build_sampled_target_op()
+        targets, target_vars = self._build_sampled_target_op()
         self.train_bnig = [model._build_update_op(
-                                self._replay_target_net.encoding, self.targets)
+                                self._replay_target_net.encoding, targets, target_vars)
                             for model in self.bnig_models]
 
         self._q_argmax = self._build_q_argmax()
@@ -245,8 +242,9 @@ class BDQNAgent(object):
         Returns:
         target_q_op: An op calculating the Q-value.
         """
-        with tf.name_scope("Calc_Target"):
+        with tf.name_scope("NetTarget"):
             
+            tar_mean = [model.tar_mean for model in self.bnig_models]
 
             replay_next_q_argmax = tf.one_hot(
                 tf.argmax(tf.matmul(mean, self._replay_next_net.encoding,
@@ -254,12 +252,12 @@ class BDQNAgent(object):
                 self.num_actions, name="argmax_next_q")
 
             replay_next_qt_max = tf.reduce_sum(
-                tf.transpose(tf.matmul(mean, self._replay_next_target_net.encoding,
+                tf.transpose(tf.matmul(tar_mean, self._replay_next_target_net.encoding,
                                        transpose_b=True)) * replay_next_q_argmax,
                 reduction_indices=1,
                 name='qt_max')
 
-            qt = tf.matmul(mean,
+            qt = tf.matmul(tar_mean,
                             self._replay_next_target_net.encoding,
                             transpose_b=True)
 
@@ -307,10 +305,18 @@ class BDQNAgent(object):
         """
         with tf.name_scope("sample_target"):
             replay_next_q_values = [model.target_sample_op for model in self.bnig_models]
-
             replay_next_q_max = tf.reduce_max(replay_next_q_values, axis=0, name="qt_max")
-            return self._replay.rewards + self.cumulative_gamma * \
+            targets = self._replay.rewards + self.cumulative_gamma * \
                 replay_next_q_max * (1. - tf.cast(self._replay.terminals, tf.float32))
+
+        with tf.name_scope("target_variance"):
+            var = tf.reshape([model.expected_variance for model in self.bnig_models], [self.num_actions,1], name="variances")
+            replay_next_q_argmax = tf.one_hot(
+                tf.argmax(replay_next_q_values),
+                self.num_actions)
+            target_vars = tf.squeeze(replay_next_q_argmax@var)*(1. - tf.cast(self._replay.terminals, tf.float32))
+
+        return targets, target_vars
 
     def _build_sync_op(self):
         """Builds ops for assigning weights from online to target network.
@@ -331,6 +337,8 @@ class BDQNAgent(object):
             for (w_online, w_target) in zip(trainables_online, trainables_target):
                 # Assign weights from online to target network.
                 sync_qt_ops.append(w_target.assign(w_online, use_locking=True))
+            for model in self.bnig_models:
+                sync_qt_ops.append(model.sync_target())
             return sync_qt_ops
 
     def begin_episode(self, observation):

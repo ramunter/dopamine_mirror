@@ -23,13 +23,13 @@ tf.train.AdamOptimizer.learning_rate = 0.001
 tf.train.AdamOptimizer.epsilon = 0.0003125
 
 create_gym_environment.environment_name = 'CartPole'
-create_gym_environment.version = 'v0'
+create_gym_environment.version = 'v1'
 create_agent.agent_name = 'dqn'
 Runner.create_environment_fn = @gym_lib.create_gym_environment
-Runner.num_iterations = 500
+Runner.num_iterations = 50
 Runner.training_steps = 1000
 Runner.evaluation_steps = 1000
-Runner.max_steps_per_episode = 200  # Default max episode length.
+Runner.max_steps_per_episode = 500  # Default max episode length.
 
 WrappedReplayBuffer.replay_capacity = 50000
 WrappedReplayBuffer.batch_size = 128

@@ -1,38 +1,0 @@
-[compute-3-0-17.foreman.hpc.ntnu.no:80753] pml_ucx.c:226 Error: UCP worker does not support MPI_THREAD_MULTIPLE
---------------------------------------------------------------------------
-A process has executed an operation involving a call to the
-"fork()" system call to create a child process.  Open MPI is currently
-operating in a condition that could result in memory corruption or
-other system errors; your job may hang, crash, or produce silent
-data corruption.  The use of fork() (or system() or other calls that
-create child processes) is strongly discouraged.
-
-The process that invoked fork was:
-
-  Local host:          [[47476,1],0] (PID 80753)
-
-If you are *absolutely sure* that your application will successfully
-and correctly survive a call to fork(), you may disable this warning
-by setting the mpi_warn_on_fork MCA parameter to 0.
---------------------------------------------------------------------------
-2019-03-14 10:26:38.648495: I tensorflow/core/common_runtime/process_util.cc:69] Creating new thread pool with default inter op setting: 2. Tune using inter_op_parallelism_threads for best performance.
-I0314 10:26:38.650885 47051878899392 tf_logging.py:115] Creating BDQNAgent agent with the following parameters:
-I0314 10:26:38.651075 47051878899392 tf_logging.py:115] 	 gamma: 0.990000
-I0314 10:26:38.651172 47051878899392 tf_logging.py:115] 	 update_horizon: 1.000000
-I0314 10:26:38.651262 47051878899392 tf_logging.py:115] 	 min_replay_history: 20000
-I0314 10:26:38.651344 47051878899392 tf_logging.py:115] 	 update_period: 4
-I0314 10:26:38.651425 47051878899392 tf_logging.py:115] 	 target_update_period: 8000
-I0314 10:26:38.651504 47051878899392 tf_logging.py:115] 	 tf_device: /gpu:0
-I0314 10:26:38.651582 47051878899392 tf_logging.py:115] 	 use_staging: True
-I0314 10:26:38.651659 47051878899392 tf_logging.py:115] 	 optimizer: <tensorflow.python.training.rmsprop.RMSPropOptimizer object at 0x2acbba44d2b0>
-I0314 10:26:38.678794 47051878899392 tf_logging.py:115] Creating a OutOfGraphReplayBuffer replay memory with the following parameters:
-I0314 10:26:38.678921 47051878899392 tf_logging.py:115] 	 observation_shape: (84, 84)
-I0314 10:26:38.679018 47051878899392 tf_logging.py:115] 	 observation_dtype: <class 'numpy.uint8'>
-I0314 10:26:38.679106 47051878899392 tf_logging.py:115] 	 stack_size: 4
-I0314 10:26:38.679189 47051878899392 tf_logging.py:115] 	 replay_capacity: 1000000
-I0314 10:26:38.679270 47051878899392 tf_logging.py:115] 	 batch_size: 32
-I0314 10:26:38.679349 47051878899392 tf_logging.py:115] 	 update_horizon: 1
-I0314 10:26:38.679427 47051878899392 tf_logging.py:115] 	 gamma: 0.990000
-I0314 10:26:51.957636 47051878899392 tf_logging.py:115] Beginning training...
-I0314 10:26:51.957935 47051878899392 tf_logging.py:115] Starting iteration 0
-Steps executed: 947 Episode length: 947 Return: -20.0Steps executed: 1989 Episode length: 1042 Return: -19.0Steps executed: 3024 Episode length: 1035 Return: -21.0Steps executed: 3992 Episode length: 968 Return: -20.0Steps executed: 5014 Episode length: 1022 Return: -20.0Steps executed: 5985 Episode length: 971 Return: -21.0Steps executed: 6965 Episode length: 980 Return: -20.0Steps executed: 7855 Episode length: 890 Return: -20.0Steps executed: 8676 Episode length: 821 Return: -21.0Steps executed: 9577 Episode length: 901 Return: -21.0Steps executed: 10447 Episode length: 870 Return: -20.0Steps executed: 11392 Episode length: 945 Return: -21.0Steps executed: 12526 Episode length: 1134 Return: -19.0Steps executed: 13416 Episode length: 890 Return: -20.0Steps executed: 14302 Episode length: 886 Return: -21.0Steps executed: 15168 Episode length: 866 Return: -20.0Steps executed: 16154 Episode length: 986 Return: -20.0Steps executed: 17273 Episode length: 1119 Return: -19.0Steps executed: 18258 Episode length: 985 Return: -19.0Steps executed: 19420 Episode length: 1162 Return: -20.0Steps executed: 20288 Episode length: 868 Return: -21.0Steps executed: 21438 Episode length: 1150 Return: -17.0Steps executed: 22242 Episode length: 804 Return: -21.0Steps executed: 23066 Episode length: 824 Return: -21.0Steps executed: 24115 Episode length: 1049 Return: -20.0Steps executed: 25042 Episode length: 927 Return: -20.0Steps executed: 25894 Episode length: 852 Return: -21.0Steps executed: 26686 Episode length: 792 Return: -21.0Steps executed: 27568 Episode length: 882 Return: -21.0Steps executed: 28394 Episode length: 826 Return: -21.0Steps executed: 29158 Episode length: 764 Return: -21.0Steps executed: 30139 Episode length: 981 Return: -20.0Steps executed: 31025 Episode length: 886 Return: -21.0Steps executed: 31849 Episode length: 824 Return: -21.0Steps executed: 32798 Episode length: 949 Return: -20.0Steps executed: 33683 Episode length: 885 Return: -21.0Steps executed: 34447 Episode length: 764 Return: -21.0Steps executed: 35271 Episode length: 824 Return: -21.0Steps executed: 36063 Episode length: 792 Return: -21.0Steps executed: 36827 Episode length: 764 Return: -21.0Steps executed: 37591 Episode length: 764 Return: -21.0Steps executed: 38535 Episode length: 944 Return: -21.0Steps executed: 39606 Episode length: 1071 Return: -20.0Steps executed: 40458 Episode length: 852 Return: -21.0Steps executed: 41343 Episode length: 885 Return: -21.0Steps executed: 42107 Episode length: 764 Return: -21.0Steps executed: 42993 Episode length: 886 Return: -21.0Steps executed: 43881 Episode length: 888 Return: -20.0Steps executed: 44766 Episode length: 885 Return: -21.0Steps executed: 45618 Episode length: 852 Return: -21.0Steps executed: 46520 Episode length: 902 Return: -20.0Steps executed: 47284 Episode length: 764 Return: -21.0Steps executed: 48048 Episode length: 764 Return: -21.0Steps executed: 49112 Episode length: 1064 Return: -19.0Steps executed: 50026 Episode length: 914 Return: -21.0Steps executed: 51072 Episode length: 1046 Return: -20.0Steps executed: 51888 Episode length: 816 Return: -21.0Steps executed: 52815 Episode length: 927 Return: -20.0Steps executed: 53691 Episode length: 876 Return: -21.0Steps executed: 54658 Episode length: 967 Return: -20.0Steps executed: 55572 Episode length: 914 Return: -21.0Steps executed: 56520 Episode length: 948 Return: -20.0Steps executed: 57363 Episode length: 843 Return: -21.0Steps executed: 58526 Episode length: 1163 Return: -19.0Steps executed: 59599 Episode length: 1073 Return: -20.0
