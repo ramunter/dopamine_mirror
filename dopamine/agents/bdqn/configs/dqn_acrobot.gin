@@ -3,6 +3,7 @@
 import dopamine.discrete_domains.gym_lib
 import dopamine.discrete_domains.run_experiment
 import dopamine.agents.bdqn.bdqn_agent
+import dopamine.agents.bdqn.DeepBNIG
 import dopamine.replay_memory.circular_replay_buffer
 import gin.tf.external_configurables
 
@@ -18,6 +19,8 @@ BDQNAgent.target_update_period = 100
 BDQNAgent.tf_device = '/cpu:*'  # use '/cpu:*' for non-GPU version
 BDQNAgent.optimizer = @tf.train.AdamOptimizer()
 
+DeepBNIG.lr = 1e-8
+
 tf.train.AdamOptimizer.learning_rate = 0.001
 tf.train.AdamOptimizer.epsilon = 0.0003125
 
@@ -26,8 +29,8 @@ create_gym_environment.version = 'v1'
 create_agent.agent_name = 'bdqn'
 Runner.create_environment_fn = @gym_lib.create_gym_environment
 Runner.num_iterations = 50
-Runner.training_steps = 2000
-Runner.evaluation_steps = 2000
+Runner.training_steps = 1000
+Runner.evaluation_steps = 1000
 Runner.max_steps_per_episode = 500
 
 WrappedReplayBuffer.replay_capacity = 50000

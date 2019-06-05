@@ -12,6 +12,7 @@ from dopamine.agents.bdqn.BNIG import BNIG
 
 tfd = tfp.distributions
 
+@gin.configurable
 class DeepBNIG(BNIG):
     def __init__(self,
                  action,

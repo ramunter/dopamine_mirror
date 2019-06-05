@@ -10,24 +10,24 @@ DQNAgent.observation_shape = %corridor_lib.CORRIDOR_OBSERVATION_SHAPE
 DQNAgent.observation_dtype = %corridor_lib.CORRIDOR_OBSERVATION_DTYPE
 DQNAgent.stack_size = %corridor_lib.CORRIDOR_STACK_SIZE
 DQNAgent.network = @corridor_lib.corridor_dqn_network
-DQNAgent.gamma = 0.9
+DQNAgent.gamma = 0.99
 DQNAgent.update_horizon = 3
 DQNAgent.min_replay_history = 50
 DQNAgent.update_period = 1
-DQNAgent.target_update_period = 10
+DQNAgent.target_update_period = 50
 DQNAgent.epsilon_fn = @dqn_agent.identity_epsilon
 DQNAgent.tf_device = '/cpu:*'  # use '/cpu:*' for non-GPU version
 DQNAgent.optimizer = @tf.train.AdamOptimizer()
 
-tf.train.AdamOptimizer.learning_rate = 0.01
+tf.train.AdamOptimizer.learning_rate = 0.001
 
 create_agent.agent_name = 'dqn'
-create_corridor_environment.N = 14
+create_corridor_environment.N = 6
 Runner.create_environment_fn = @corridor_lib.create_corridor_environment
 Runner.num_iterations = 20
-Runner.training_steps = 100
-Runner.evaluation_steps = 100
+Runner.training_steps = 500
+Runner.evaluation_steps = 500
 Runner.max_steps_per_episode = 500
 
 WrappedReplayBuffer.replay_capacity = 50000
-WrappedReplayBuffer.batch_size = 8
+WrappedReplayBuffer.batch_size = 32

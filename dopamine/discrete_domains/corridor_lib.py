@@ -22,7 +22,7 @@ RIGHT = 1
 
 @gin.configurable
 def create_corridor_environment(N=10):
-    return Corridor(N)
+    return Corridor(N, K=int(N/2))
 
 @gin.configurable
 def _basic_discrete_domain_network(num_actions, state,
@@ -42,7 +42,7 @@ def _basic_discrete_domain_network(num_actions, state,
     """
     net = tf.cast(state, tf.float32)
     net = slim.flatten(net)
-    net = slim.fully_connected(net, 12)
+    net = slim.fully_connected(net, 512)
     if num_atoms is None:
         # We are constructing a DQN-style network.
         return slim.fully_connected(net, num_actions, activation_fn=None)
@@ -203,5 +203,3 @@ class Corridor(gym.Env):
         self.steps = 1
         self.game_over = False
         return self.state_output
-
-    

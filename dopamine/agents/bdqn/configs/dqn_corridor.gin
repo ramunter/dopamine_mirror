@@ -3,6 +3,7 @@
 import dopamine.discrete_domains.corridor_lib
 import dopamine.discrete_domains.run_experiment
 import dopamine.agents.dqn.dqn_agent
+import dopamine.agents.bdqn.DeepBNIG
 import dopamine.replay_memory.circular_replay_buffer
 import gin.tf.external_configurables
 
@@ -10,18 +11,20 @@ BDQNAgent.observation_shape = %corridor_lib.CORRIDOR_OBSERVATION_SHAPE
 BDQNAgent.observation_dtype = %corridor_lib.CORRIDOR_OBSERVATION_DTYPE
 BDQNAgent.stack_size = %corridor_lib.CORRIDOR_STACK_SIZE
 BDQNAgent.network = @corridor_lib.corridor_dqn_network
-BDQNAgent.gamma = 0.9
+BDQNAgent.gamma = 0.99
 BDQNAgent.update_horizon = 3
 BDQNAgent.min_replay_history = 50
 BDQNAgent.update_period = 1
-BDQNAgent.target_update_period = 10
+BDQNAgent.target_update_period = 50
 BDQNAgent.tf_device = '/cpu:*'  # use '/cpu:*' for non-GPU version
 BDQNAgent.optimizer = @tf.train.AdamOptimizer()
 
-tf.train.AdamOptimizer.learning_rate = 0.01
+tf.train.AdamOptimizer.learning_rate = 0.001
+
+DeepBNIG.lr = 1e-3
 
 create_agent.agent_name = 'bdqn'
-create_corridor_environment.N = 14
+create_corridor_environment.N = 6
 Runner.create_environment_fn = @corridor_lib.create_corridor_environment
 Runner.num_iterations = 20
 Runner.training_steps = 500
@@ -29,4 +32,4 @@ Runner.evaluation_steps = 500
 Runner.max_steps_per_episode = 500
 
 WrappedReplayBuffer.replay_capacity = 50000
-WrappedReplayBuffer.batch_size = 8
+WrappedReplayBuffer.batch_size = 32
