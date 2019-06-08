@@ -16,6 +16,7 @@ DQNAgent.min_replay_history = 500
 DQNAgent.update_period = 4
 DQNAgent.target_update_period = 100
 DQNAgent.epsilon_fn = @dqn_agent.identity_epsilon
+DQNAgent.epsilon_train = 0.0
 DQNAgent.tf_device = '/cpu:*'  # use '/cpu:*' for non-GPU version
 DQNAgent.optimizer = @tf.train.AdamOptimizer()
 

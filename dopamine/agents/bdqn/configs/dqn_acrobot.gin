@@ -19,7 +19,7 @@ BDQNAgent.target_update_period = 100
 BDQNAgent.tf_device = '/cpu:*'  # use '/cpu:*' for non-GPU version
 BDQNAgent.optimizer = @tf.train.AdamOptimizer()
 
-DeepBNIG.lr = 1e-8
+DeepBNIG.lr = 1e-5
 
 tf.train.AdamOptimizer.learning_rate = 0.001
 tf.train.AdamOptimizer.epsilon = 0.0003125

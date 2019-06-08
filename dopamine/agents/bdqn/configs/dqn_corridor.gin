@@ -14,19 +14,19 @@ BDQNAgent.network = @corridor_lib.corridor_dqn_network
 BDQNAgent.gamma = 0.99
 BDQNAgent.update_horizon = 3
 BDQNAgent.min_replay_history = 50
-BDQNAgent.update_period = 1
-BDQNAgent.target_update_period = 50
+BDQNAgent.update_period = 4
+BDQNAgent.target_update_period = 100
 BDQNAgent.tf_device = '/cpu:*'  # use '/cpu:*' for non-GPU version
 BDQNAgent.optimizer = @tf.train.AdamOptimizer()
 
-tf.train.AdamOptimizer.learning_rate = 0.001
+tf.train.AdamOptimizer.learning_rate = 0.01
 
-DeepBNIG.lr = 1e-3
+DeepBNIG.lr = 1e-5
 
 create_agent.agent_name = 'bdqn'
-create_corridor_environment.N = 6
+create_corridor_environment.N = 12
 Runner.create_environment_fn = @corridor_lib.create_corridor_environment
-Runner.num_iterations = 20
+Runner.num_iterations = 10
 Runner.training_steps = 500
 Runner.evaluation_steps = 500
 Runner.max_steps_per_episode = 500

@@ -20,7 +20,7 @@ class DeepBNIG(BNIG):
                  replay_next_state,
                  replay_buffer,
                  coef_var=1,
-                 lr=1e-2):
+                 lr=1e-3):
         self.action = action
 
         # External Tensors

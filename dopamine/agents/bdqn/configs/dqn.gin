@@ -19,11 +19,13 @@ atari_lib.create_atari_environment.sticky_actions = True
 create_agent.agent_name = 'bdqn'
 Runner.num_iterations = 200
 Runner.training_steps = 250000  # agent steps
-Runner.evaluation_steps = 50000  # agent steps
+Runner.evaluation_steps = 125000  # agent steps
 Runner.max_steps_per_episode = 27000  # agent steps
 
 WrappedReplayBuffer.replay_capacity = 1000000
 WrappedReplayBuffer.batch_size = 32
+
+DeepBNIG.lr = 1e-5
 
 BDQNAgent.gamma = 0.99
 BDQNAgent.update_horizon = 5

@@ -3,6 +3,7 @@
 import dopamine.discrete_domains.gym_lib
 import dopamine.discrete_domains.run_experiment
 import dopamine.agents.bdqn.bdqn_agent
+import dopamine.agents.bdqn.DeepBNIG
 import dopamine.replay_memory.circular_replay_buffer
 import gin.tf.external_configurables
 
@@ -20,6 +21,8 @@ BDQNAgent.optimizer = @tf.train.AdamOptimizer()
 
 tf.train.AdamOptimizer.learning_rate = 0.001
 tf.train.AdamOptimizer.epsilon = 0.0003125
+
+DeepBNIG.lr = 1e-5
 
 create_gym_environment.environment_name = 'CartPole'
 create_gym_environment.version = 'v1'

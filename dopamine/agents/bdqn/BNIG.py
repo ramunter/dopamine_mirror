@@ -17,7 +17,7 @@ class BNIG():
                  replay_next_state,
                  replay_buffer,
                  coef_var=1,
-                 lr=1e-2):
+                 lr=1e-3):
         self.action = action
 
         # External Tensors
@@ -45,7 +45,7 @@ class BNIG():
 
     @property
     def alpha_prior(self):
-        return tf.cast(1 + 1e-3, dtype=tf.float32)
+        return tf.cast(1/(1-self.mem), dtype=tf.float32)
 
     @property
     def beta_prior(self):
@@ -129,11 +129,9 @@ class BNIG():
                     0.5*tf.squeeze(yTy -
                         tf.transpose(mean)@inv_cov@mean),
                     1e-6)
-            # beta = self.beta_prior + 0.5*tf.reshape(self.yTy, [])
 
             tf.summary.scalar(str(self.action), alpha, family="alpha")
             tf.summary.scalar(str(self.action), beta, family="beta")
-
             return  [tf.assign(self.mean , tf.squeeze(mean)),
                     tf.assign(self.cov  , cov),
                     tf.assign(self.alpha, alpha),
