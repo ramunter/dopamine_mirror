@@ -15,7 +15,6 @@ tfd = tfp.distributions
 @gin.configurable
 class DeepBNIG(BNIG):
     def __init__(self,
-                 n_step,
                  action,
                  state,
                  replay_next_state,
@@ -30,8 +29,6 @@ class DeepBNIG(BNIG):
         self.input_size =  int(state.get_shape()[1])
         self.coef_var = coef_var
         self.mem = 1-lr
-        self.n_step = n_step
-
         self.scope_name = "DeepBNIG/"+str(action)
 
         with tf.name_scope(self.scope_name):

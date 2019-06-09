@@ -12,7 +12,6 @@ tfd = tfp.distributions
 
 class BNIG():
     def __init__(self,
-                 n_step,
                  action,
                  state,
                  replay_next_state,
@@ -27,7 +26,6 @@ class BNIG():
         self.input_size =  int(state.get_shape()[1])
         self.coef_var = coef_var
         self.mem = 1-lr
-        self.n_step = n_step
         self.scope_name = "BNIG/"+str(action)
         with tf.name_scope(self.scope_name):
 
@@ -47,11 +45,11 @@ class BNIG():
 
     @property
     def alpha_prior(self):
-        return tf.cast(1, dtype=tf.float32)
+        return tf.cast(1/(1-self.mem), dtype=tf.float32)
 
     @property
     def beta_prior(self):
-        return tf.cast(1, dtype=tf.float32)
+        return tf.cast(1e-2, dtype=tf.float32)
 
     @property
     def expected_variance(self):
@@ -114,6 +112,8 @@ class BNIG():
             XTX = self.mem*self.XTX + tf.transpose(X)@X
             XTy = self.mem*self.XTy + tf.transpose(X)@y
 
+            # yTy = self.mem*self.yTy + tf.reduce_sum(var)
+            # y_t = y*(1-terminals[:,None]) + X@self.mean[:,None]*(terminals[:,None])
             yTy = self.mem*self.yTy + tf.transpose(y)@y
             n   = self.mem*self.n   + tf.cast(n, tf.float32)
 
@@ -123,7 +123,7 @@ class BNIG():
     
             mean = cov@XTy
 
-            alpha = self.alpha_prior + tf.cast(n/2, tf.float32)*self.n_step
+            alpha = self.alpha_prior + tf.cast(n/2, tf.float32)
 
             beta = tf.maximum(self.beta_prior + \
                     0.5*tf.squeeze(yTy -
