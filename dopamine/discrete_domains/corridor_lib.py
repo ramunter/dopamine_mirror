@@ -191,8 +191,8 @@ class Corridor(gym.Env):
 
         if self.state == self.N:
             reward = 1
-        elif action == 0:
-            reward = 1/(10*self.N)
+        elif action == 1:
+            reward = -1/(10*self.N)
         else:
             reward = 0
 
