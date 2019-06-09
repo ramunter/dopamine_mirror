@@ -77,14 +77,14 @@ class BNIG():
     def _sampler_graph(self, _input, n=1):
         sigma_dist = tfd.InverseGamma(concentration=self.alpha, rate=self.beta)
         sigma = tf.sqrt(sigma_dist.sample(1))
-        normal = tfd.Normal(loc=0, scale=1)
+        normal = tfd.Normal(loc=0.0, scale=1.0)
         coef = self.mean[:,None] + sigma*tf.linalg.cholesky(self.cov)@normal.sample((self.input_size,n))
         return tf.reduce_sum(_input*tf.transpose(coef), axis=1) + normal.sample(n)*sigma
 
     def _target_sampler_graph(self, _input, n=1):
         sigma_dist = tfd.InverseGamma(concentration=self.tar_alpha, rate=self.tar_beta)
         sigma = tf.sqrt(sigma_dist.sample(1))
-        normal = tfd.Normal(loc=0, scale=1)
+        normal = tfd.Normal(loc=0.0, scale=1.0)
         coef = self.tar_mean[:,None] + sigma*tf.linalg.cholesky(self.tar_cov)@normal.sample((self.input_size,n))
         return tf.reduce_sum(_input*tf.transpose(coef), axis=1) + normal.sample(n)*sigma
 
