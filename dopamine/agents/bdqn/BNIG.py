@@ -45,7 +45,7 @@ class BNIG():
 
     @property
     def alpha_prior(self):
-        return tf.cast(1/(1-self.mem), dtype=tf.float32)
+        return tf.cast(1e5, dtype=tf.float32)
 
     @property
     def beta_prior(self):
