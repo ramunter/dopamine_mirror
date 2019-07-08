@@ -8,7 +8,7 @@ import dopamine.replay_memory.circular_replay_buffer
 import gin.tf.external_configurables
 
 DQNAgent.gamma = 0.99
-DQNAgent.update_horizon = 1
+DQNAgent.update_horizon = 5
 DQNAgent.min_replay_history = 20000  # agent steps
 DQNAgent.update_period = 4
 DQNAgent.target_update_period = 8000  # agent steps

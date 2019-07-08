@@ -13,6 +13,7 @@ tfd = tfp.distributions
 class BNIG():
     def __init__(self,
                  action,
+                 num_actions,
                  state,
                  replay_next_state,
                  replay_buffer,
@@ -26,6 +27,7 @@ class BNIG():
         self.input_size =  int(state.get_shape()[1])
         self.coef_var = coef_var
         self.mem = 1-lr
+        self.prior_scale = (self._replay.batch_size)*(1/num_actions)/(1-self.mem)
         self.scope_name = "BNIG/"+str(action)
         with tf.name_scope(self.scope_name):
 
@@ -45,7 +47,7 @@ class BNIG():
 
     @property
     def alpha_prior(self):
-        return tf.cast(1e5, dtype=tf.float32)
+        return tf.cast(1, dtype=tf.float32)
 
     @property
     def beta_prior(self):
@@ -70,8 +72,8 @@ class BNIG():
         with tf.variable_scope(self.scope_name+"/data/"):
             self.XTX = tf.get_variable("XTX", initializer=tf.cast(np.zeros((self.input_size, self.input_size)), dtype=tf.float32), trainable=False)
             self.XTy = tf.get_variable("XTy", initializer=tf.cast(np.zeros((self.input_size, 1)), dtype=tf.float32), trainable=False)
-            self.n   = tf.get_variable("n",   initializer=tf.cast(0, dtype=tf.float32), trainable=False)
-            self.yTy = tf.get_variable("yTy", initializer=tf.cast(np.zeros((1,1)), dtype=tf.float32), trainable=False)
+            self.n   = tf.get_variable("n",   initializer=tf.cast(self.prior_scale, dtype=tf.float32), trainable=False)
+            self.yTy = tf.get_variable("yTy", initializer=tf.cast(np.ones((1,1))*self.prior_scale, dtype=tf.float32), trainable=False)
 
 
     def _sampler_graph(self, _input, n=1):

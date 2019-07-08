@@ -16,6 +16,7 @@ tfd = tfp.distributions
 class DeepBNIG(BNIG):
     def __init__(self,
                  action,
+                 num_actions,
                  state,
                  replay_next_state,
                  replay_buffer,
@@ -29,6 +30,7 @@ class DeepBNIG(BNIG):
         self.input_size =  int(state.get_shape()[1])
         self.coef_var = coef_var
         self.mem = 1-lr
+        self.prior_scale = (self._replay.batch_size)*(1/num_actions)/(1-self.mem)
         self.scope_name = "DeepBNIG/"+str(action)
 
         with tf.name_scope(self.scope_name):
@@ -40,7 +42,7 @@ class DeepBNIG(BNIG):
             self.sample_op = self._sampler_graph(state)
             self.target_sample_op = self._target_sampler_graph(replay_next_state, n=self._replay.batch_size)
 
-            self.update_normal_vector_op = tf.assign(self.normal_vector, self.normal_sample)
+            self.update_normal_vector_op = [tf.assign(self.normal_vector, self.normal_sample)]
 
     @property
     def mean_prior(self):
@@ -77,11 +79,12 @@ class DeepBNIG(BNIG):
         with tf.variable_scope(self.scope_name+"/parameters/"):
             self.XTX = tf.get_variable("XTX", initializer=tf.cast(np.zeros((self.input_size, self.input_size)), dtype=tf.float32), trainable=False)
             self.XTy = tf.get_variable("XTy", initializer=tf.cast(np.zeros((self.input_size, 1)), dtype=tf.float32), trainable=False)
-            self.n   = tf.get_variable("n",   initializer=tf.cast(0, dtype=tf.float32), trainable=False)
-            self.yTy = tf.get_variable("yTy", initializer=tf.cast(np.zeros((1,1)), dtype=tf.float32), trainable=False)
+            self.n   = tf.get_variable("n",   initializer=tf.cast(self.prior_scale, dtype=tf.float32)*1e5, trainable=False)
+            self.yTy = tf.get_variable("yTy", initializer=tf.cast(np.ones((1,1))*self.prior_scale, dtype=tf.float32), trainable=False)
 
         with tf.variable_scope(self.scope_name+"/random/"):
             self.normal_vector = tf.get_variable("normal_vector",  initializer=self.normal_sample, trainable=False)
+
 
     def _sampler_graph(self, _input, n=1):
         sigma_dist = tfd.InverseGamma(concentration=self.alpha, rate=self.beta)

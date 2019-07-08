@@ -10,7 +10,7 @@ from gym.utils import seeding
 import tensorflow as tf
 import gin.tf
 
-gin.constant('corridor_lib.CORRIDOR_OBSERVATION_SHAPE', (2, 1))
+gin.constant('corridor_lib.CORRIDOR_OBSERVATION_SHAPE', (10, 1))
 gin.constant('corridor_lib.CORRIDOR_OBSERVATION_DTYPE', tf.float32)
 gin.constant('corridor_lib.CORRIDOR_STACK_SIZE', 1)
 
@@ -22,7 +22,7 @@ RIGHT = 1
 
 @gin.configurable
 def create_corridor_environment(N=10):
-    return Corridor(N)
+    return Corridor(N)#, K=int(N/2))
 
 @gin.configurable
 def _basic_discrete_domain_network(num_actions, state,
@@ -42,7 +42,7 @@ def _basic_discrete_domain_network(num_actions, state,
     """
     net = tf.cast(state, tf.float32)
     net = slim.flatten(net)
-    net = slim.fully_connected(net, 24)
+    net = slim.fully_connected(net, 20)
     if num_atoms is None:
         # We are constructing a DQN-style network.
         return slim.fully_connected(net, num_actions, activation_fn=None)
@@ -69,7 +69,8 @@ def _bayesian_discrete_domain_network(num_actions, state):
     """
     net = tf.cast(state, tf.float32)
     net = slim.flatten(net)
-    net = slim.fully_connected(net, 24)
+    net = slim.fully_connected(net, 20)
+
     # We are constructing a BDQN-style network.
     return net
 
@@ -127,12 +128,11 @@ class Corridor(gym.Env):
     Code built based on the Chain environment in AI GYM
     """
 
-    def __init__(self, N=3, K=0, p=1):
+    def __init__(self, N=3, K=0):
         self.seed()
         self.N = N
 
         self.reverse_states = choice(arange(N), size=K, replace=False)
-        self.p = p
 
         self.state = 1  # Start at beginning of the chain
         self.steps = 1
@@ -143,7 +143,9 @@ class Corridor(gym.Env):
 
     @property
     def state_output(self):
-        return array([self.steps/self.N, self.state/self.N])
+        state = zeros((1, self.N))
+        state[0, self.state-1] = 1
+        return array(state)
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -171,10 +173,6 @@ class Corridor(gym.Env):
         # If in a reverse state swap action.
         if self.state in self.reverse_states:
             action = 1 - action
-
-        # If trying to move right there is a prob of moving left
-        if action == RIGHT:
-            action = binomial(1, p=self.p)  # p prob of right
 
         return action
 

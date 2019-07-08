@@ -102,7 +102,7 @@ class DQNAgent(object):
                      epsilon=0.00001,
                      centered=True),
                  summary_writer=None,
-                 summary_writing_frequency=4):
+                 summary_writing_frequency=500):
         """Initializes the agent and constructs the components of its graph.
 
         Args:

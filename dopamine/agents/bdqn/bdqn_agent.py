@@ -212,6 +212,7 @@ class BDQNAgent(object):
 
         # Create DeepBNIG models
         self.bnig_models = [DeepBNIG(a,
+                                 self.num_actions,
                                  self._net.encoding,
                                  self._replay_next_target_net.encoding,
                                  self._replay)
