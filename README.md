@@ -1,3 +1,5 @@
+Fork of Dopamine for DNN implementation of bayesian q learning for my master thesis: https://github.com/ramunter/masters-thesis
+
 # Dopamine
 
 <div align="center">
