@@ -1,6 +1,8 @@
-## Fork of Dopamine for DNN implementation of bayesian q learning for my master thesis: https://github.com/ramunter/masters-thesis
-## Main implementation found here: https://github.com/ramunter/dopamine_mirror/tree/master/dopamine/agents/bdqn
-# Dopamine
+*_This is a fork of Dopamine for DNN implementation of bayesian q learning for my master thesis: https://github.com/ramunter/masters-thesis_*
+
+_*Implementation of my bayesian DNN found here: https://github.com/ramunter/dopamine_mirror/tree/master/dopamine/agents/bdqn*_
+
+### Dopamine
 
 <div align="center">
   <img src="https://google.github.io/dopamine/images/dopamine_logo.png"><br><br>
